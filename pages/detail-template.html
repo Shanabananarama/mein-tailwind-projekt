@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{CARD_NAME}} Sammelkarte</title>
+  <link href="../dist/output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col items-center p-6">
+
+  <!-- Zurück zur Startseite -->
+  <a href="../index.html" 
+     class="text-blue-500 underline mb-4 self-start hover:text-blue-700 transition">
+     ← Zurück zur Startseite
+  </a>
+
+  <!-- Karten-Container -->
+  <div class="bg-white shadow-lg rounded-lg p-4 max-w-sm w-full">
+    <!-- 🖼 Bild -->
+    <img src="../images/{{IMAGE_FILE}}" 
+         alt="{{CARD_NAME}} Sammelkarte" 
+         class="rounded-lg mb-4 w-full">
+
+    <!-- ℹ️ Kartendetails -->
+    <div class="space-y-2">
+      <h1 class="text-2xl font-bold">{{CARD_NAME}} – {{CARD_SERIE}}</h1>
+      <p class="text-gray-700">Exklusive Sammelkarte · {{CARD_YEAR}}</p>
+      <p class="text-lg font-semibold">💰 Aktueller Marktwert: 
+        <span class="text-green-600">{{CARD_PRICE}} €</span>
+      </p>
+      <ul class="list-disc list-inside text-sm text-gray-600">
+        <li>Limitierte Auflage ({{CARD_LIMIT}} Stück weltweit)</li>
+        <li>Beliebtheit: Platz {{CARD_TREND}} in den Trends</li>
+        <li>Zustand: {{CARD_CONDITION}}</li>
+      </ul>
+    </div>
+
+    <!-- Preisdiagramm Button -->
+    <button class="mt-4 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
+      📈 Preisentwicklung anzeigen
+    </button>
+  </div>
+
+</body>
+</html>

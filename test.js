@@ -1,0 +1,1 @@
+// Funktion, die den höchsten Preis aus einer Liste zurückgibt
