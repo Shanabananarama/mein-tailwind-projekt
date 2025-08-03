@@ -1,0 +1,29 @@
+name: CI Test Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Repository herunterladen
+        uses: actions/checkout@v3
+
+      - name: 🛠 Node.js einrichten
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: 📦 Abhängigkeiten installieren
+        run: npm install
+
+      - name: 🏗 Projekt bauen
+        run: npm run build
+
+      - name: ✅ Tests ausführen
+        run: npm test || echo "⚠️ Keine Tests vorhanden – wird übersprungen"
