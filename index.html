@@ -3,23 +3,30 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meine Trading Cards</title>
-    <link href="/style/output.css" rel="stylesheet">
+    <link rel="stylesheet" href="/style/output.css">
 </head>
 
-<body class="bg-gray-100 min-h-screen">
-    <header class="bg-white shadow-md p-4 mb-6">
-        <h1 class="text-3xl font-bold text-center">🎴 Meine Trading Cards</h1>
+<body class="bg-gray-100">
+
+    <!-- Header -->
+    <header class="bg-white shadow-md p-4 flex items-center justify-between">
+        <h1 class="text-2xl font-bold flex items-center">
+            🃏 Meine Trading Cards
+        </h1>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4">
-        <section id="cardsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <!-- Karten werden später per index.js eingefügt -->
-        </section>
+    <!-- Kartenübersicht -->
+    <main class="p-6">
+        <h2 class="text-xl font-semibold mb-4">Alle Karten</h2>
+        <div id="card-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <!-- Karten werden hier dynamisch geladen -->
+        </div>
     </main>
 
-    <script src="/scripts/index.js"></script>
+    <!-- JavaScript -->
+    <script type="module" src="/scripts/index.js"></script>
 </body>
 
 </html>
