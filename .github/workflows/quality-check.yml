@@ -1,0 +1,40 @@
+name: 🚦 Qualitätsprüfung
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Repository herunterladen
+        uses: actions/checkout@v3
+
+      - name: 🛠 Node.js einrichten
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: 📦 Abhängigkeiten installieren
+        run: npm install
+
+      - name: 🔎 HTML Dateien prüfen
+        run: |
+          npx htmlhint "**/*.html" || echo "⚠️ HTML Fehler gefunden"
+
+      - name: 🎨 CSS prüfen
+        run: |
+          npx stylelint "**/*.css" || echo "⚠️ CSS Fehler gefunden"
+
+      - name: 📂 Fehlende Dateien prüfen
+        run: |
+          if [ ! -f "public/elsa-card.jpg" ]; then echo "❌ Bild elsa-card.jpg fehlt!"; exit 1; fi
+          if [ ! -f "public/cards.json" ]; then echo "❌ cards.json fehlt!"; exit 1; fi
+          echo "✅ Alle benötigten Dateien sind vorhanden."
+
+      - name: 🏗 Projekt bauen
+        run: npm run build
