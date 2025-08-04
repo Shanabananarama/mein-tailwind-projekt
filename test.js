@@ -11,10 +11,10 @@
 // ========================================
 
 function sagHallo(name) {
-    console.log("Hallo " + name) // <- hier fehlt das Semikolon absichtlich
+  console.log("Hallo " + name); // <- hier fehlt das Semikolon absichtlich
 }
 
-sagHallo("Nils")
+sagHallo("Nils");
 
 // Absichtlich ohne Semikolon und mit extra Leerzeichen
-console.log("Auto-Fix Test")
+console.log("Auto-Fix Test");
