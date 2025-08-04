@@ -1,7 +1,20 @@
-// ❌ absichtlicher ESLint Fehler: fehlendes Semikolon und falsche Anführungszeichen
+// =======================================================
+// Test-Datei für Auto-Fix Workflow
+// Dieser Code hat absichtliche Formatierungsfehler,
+// damit unser Auto-Fix Workflow aktiviert wird.
+// =======================================================
+
+// ========================================
+// Test-Datei für Auto-Fix Workflow
+// Dieser Code hat absichtliche Formatierungsfehler,
+// damit unser Auto-Fix Workflow aktiviert wird.
+// ========================================
 
 function sagHallo(name) {
-  console.log("Hallo " + name); // <- hier fehlt das Semikolon absichtlich
+    console.log("Hallo " + name) // <- hier fehlt das Semikolon absichtlich
 }
 
-sagHallo("Nils");
+sagHallo("Nils")
+
+// Absichtlich ohne Semikolon und mit extra Leerzeichen
+console.log("Auto-Fix Test")
