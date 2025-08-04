@@ -44,3 +44,4 @@ jobs:
         run: |
           git remote set-url origin https://x-access-token:${TOKEN}@github.com/Shanabananarama/mein-tailwind-projekt.git
           git push origin HEAD:main
+          
