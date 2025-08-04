@@ -1,6 +1,7 @@
 name: 🤖 Auto-Fix Workflow
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -12,7 +13,7 @@ jobs:
       contents: write
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: 📂 Checkout Repository
         uses: actions/checkout@v3
 
       - name: ⚙️ Setup Node.js
@@ -23,7 +24,7 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm install
 
-      - name: 🔧 Run Auto-Fix
+      - name: 🛠 Run Auto-Fix
         run: |
           npx eslint . --fix || true
           npx prettier --write . || true
