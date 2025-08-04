@@ -1,4 +1,4 @@
-name: 🤖 Auto-Fix bei Fehlern
+name: 🤖 Auto-Fix Workflow: automatisches Commit & Push
 
 on:
   push:
@@ -13,8 +13,6 @@ jobs:
       # 1️⃣ Repository-Code abrufen
       - name: 📂 Checkout Repository
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       # 2️⃣ Node.js installieren
       - name: ⚙️ Setup Node.js
@@ -26,21 +24,27 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm install
 
-      # 4️⃣ Auto-Fix ausführen (Lint + Prettier)
+      # 4️⃣ Automatische Fehlerkorrekturen (Lint, Formatierung)
       - name: 🔧 Run Auto-Fix
         run: |
           npx eslint . --fix || true
           npx prettier --write . || true
 
-      # 5️⃣ Änderungen committen (nur wenn es Änderungen gab)
-      - name: 💾 Commit Fixes
+      # 5️⃣ Git konfigurieren
+      - name: 🛠 Git Config
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git diff --quiet && echo "✅ Keine Änderungen zum Commit." || git commit -m "🤖 Auto-Fix: ESLint/Prettier Fehler korrigiert"
 
-      # 6️⃣ Änderungen zurück pushen
+      # 6️⃣ Änderungen committen (nur wenn vorhanden)
+      - name: 💾 Commit Fixes
+        run: |
+          git add .
+          git diff --cached --quiet || git commit -m "🔧 Auto-Fix: Fehler automatisch behoben"
+
+      # 7️⃣ Änderungen mit Token zurückpushen
       - name: 🚀 Push Fixes
-        if: success()
-        run: git push origin main
+        env:
+          TOKEN: ${{ secrets.AUTO_FIX_TOKEN }}
+        run: |
+          git push https://$TOKEN@github.com/Shanabananarama/mein-tailwind-projekt.git HEAD:main
