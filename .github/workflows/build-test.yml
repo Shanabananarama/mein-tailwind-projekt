@@ -1,4 +1,4 @@
-name: 🔍 Quality Check
+name: 🚀 Build Test
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  lint:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -15,7 +15,7 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Node.js installieren
+      # 2️⃣ Node.js installieren (Version 18 empfohlen)
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -25,8 +25,6 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm install
 
-      # 4️⃣ Code-Stil prüfen (Linting)
-      - name: ✅ Run Lint Check
-        run: |
-          npm install eslint --save-dev
-          npx eslint . || true
+      # 4️⃣ Projekt bauen (Vite Build)
+      - name: 🏗 Build Project
+        run: npm run build
