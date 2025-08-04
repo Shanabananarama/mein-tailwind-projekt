@@ -1,26 +1,18 @@
-<!DOCTYPE html>
-<html lang="de">
+<falschertag> <!-- Das ist der absichtliche Fehler für unseren Test -->
 
-<head>
-    <!-- Automatisierungstest 1 -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meine Trading Cards – Test Build</title>
-    <link href="./style/output.css" rel="stylesheet">
-</head>
+    <!DOCTYPE html>
+    <html lang="de">
 
-<body class="bg-gray-100">
-    <header class="p-4 bg-white shadow-md flex justify-between items-center">
-        <h1 class="text-2xl font-bold">🃏 Meine Trading Cards</h1>
-    </header>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Meine Trading Cards</title>
+        <link rel="stylesheet" href="./style/input.css">
+    </head>
 
-    <main class="p-4">
-        <div id="card-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            <!-- Karten werden hier dynamisch geladen -->
-        </div>
-    </main>
+    <body class="bg-gray-100">
+        <div id="app"></div>
+        <script type="module" src="./scripts/index.js"></script>
+    </body>
 
-    <script src="./scripts/index.js" type="module"></script>
-</body>
-
-</html>
+    </html>
