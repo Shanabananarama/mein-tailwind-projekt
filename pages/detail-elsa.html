@@ -1,60 +1,68 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Elsa – Frozen Collection</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-white text-gray-900">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Elsa – Frozen Collection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-white text-gray-900">
+    <!-- Hauptcontainer -->
+    <div class="max-w-5xl mx-auto p-6">
+      <!-- Oberer Bereich: Bild + Infos -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Bild -->
+        <div class="flex justify-center">
+          <img
+            src="../images/elsa-card.jpg"
+            alt="Elsa Sammelkarte"
+            class="w-[250px] h-auto object-contain rounded-lg shadow-lg border border-gray-300"
+          />
+        </div>
 
-  <!-- Hauptcontainer -->
-  <div class="max-w-5xl mx-auto p-6">
+        <!-- Informationen -->
+        <div>
+          <h1 class="text-3xl font-bold mb-4">Elsa – Frozen Collection</h1>
+          <p class="text-gray-700 mb-4">
+            Limitierte Disney-Sammelkarte von 2025. Elsa als mächtige Magierin
+            des Winters. Diese Karte gehört zu den begehrtesten
+            Disney-Sammelstücken und ist besonders unter Sammlern beliebt.
+          </p>
 
-    <!-- Oberer Bereich: Bild + Infos -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Features -->
+          <ul
+            class="list-disc list-inside bg-gray-100 p-4 rounded-lg mb-6 shadow-sm"
+          >
+            <li>🌟 Limitierte Auflage (1.000 Stück weltweit)</li>
+            <li>🔥 Beliebtheit: Platz 2 in den Trends</li>
+            <li>💰 Durchschnittlicher Marktwert: 120 €</li>
+            <li>📦 Zustand: Near Mint (NM)</li>
+          </ul>
 
-      <!-- Bild -->
-      <div class="flex justify-center">
-        <img src="../images/elsa-card.jpg" alt="Elsa Sammelkarte"
-             class="w-[250px] h-auto object-contain rounded-lg shadow-lg border border-gray-300">
+          <!-- Zurück-Button -->
+          <a
+            href="../index.html"
+            class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+          >
+            ⬅ Zurück zur Startseite
+          </a>
+        </div>
       </div>
 
-      <!-- Informationen -->
-      <div>
-        <h1 class="text-3xl font-bold mb-4">Elsa – Frozen Collection</h1>
-        <p class="text-gray-700 mb-4">
-          Limitierte Disney-Sammelkarte von 2025. Elsa als mächtige Magierin des Winters.
-          Diese Karte gehört zu den begehrtesten Disney-Sammelstücken und ist besonders unter Sammlern beliebt.
+      <!-- Unterer Bereich: Preisdiagramm -->
+      <div class="mt-10 bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold mb-4">
+          📈 Preisentwicklung (letzte 30 Tage)
+        </h2>
+        <img
+          src="../images/sample-chart.png"
+          alt="Preisdiagramm"
+          class="w-full h-auto rounded-lg border border-gray-300"
+        />
+        <p class="text-sm text-gray-500 mt-2">
+          *Beispieldiagramm – Daten werden später dynamisch geladen.
         </p>
-
-        <!-- Features -->
-        <ul class="list-disc list-inside bg-gray-100 p-4 rounded-lg mb-6 shadow-sm">
-          <li>🌟 Limitierte Auflage (1.000 Stück weltweit)</li>
-          <li>🔥 Beliebtheit: Platz 2 in den Trends</li>
-          <li>💰 Durchschnittlicher Marktwert: 120 €</li>
-          <li>📦 Zustand: Near Mint (NM)</li>
-        </ul>
-
-        <!-- Zurück-Button -->
-        <a href="../index.html"
-           class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
-           ⬅ Zurück zur Startseite
-        </a>
       </div>
     </div>
-
-    <!-- Unterer Bereich: Preisdiagramm -->
-    <div class="mt-10 bg-white p-6 rounded-lg shadow-md">
-      <h2 class="text-xl font-semibold mb-4">📈 Preisentwicklung (letzte 30 Tage)</h2>
-      <img src="../images/sample-chart.png" alt="Preisdiagramm"
-           class="w-full h-auto rounded-lg border border-gray-300">
-      <p class="text-sm text-gray-500 mt-2">
-        *Beispieldiagramm – Daten werden später dynamisch geladen.
-      </p>
-    </div>
-
-  </div>
-
-</body>
+  </body>
 </html>

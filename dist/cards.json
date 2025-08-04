@@ -9,13 +9,7 @@
     "rawPrice": "50 €",
     "lastSale": "52 €",
     "image": "elsa-card.jpg",
-    "priceHistory": [
-      48,
-      49,
-      51,
-      53,
-      52
-    ]
+    "priceHistory": [48, 49, 51, 53, 52]
   },
   {
     "id": "spiderman",
@@ -27,13 +21,7 @@
     "rawPrice": "57 €",
     "lastSale": "60 €",
     "image": "spiderman-card.jpg",
-    "priceHistory": [
-      55,
-      57,
-      58,
-      59,
-      60
-    ]
+    "priceHistory": [55, 57, 58, 59, 60]
   },
   {
     "id": "ironman",
@@ -45,12 +33,6 @@
     "rawPrice": "66 €",
     "lastSale": "69 €",
     "image": "ironman-card.jpg",
-    "priceHistory": [
-      65,
-      66,
-      67,
-      68,
-      69
-    ]
+    "priceHistory": [65, 66, 67, 68, 69]
   }
 ]
