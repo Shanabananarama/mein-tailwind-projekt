@@ -34,9 +34,13 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: 💾 Commit Fixes
+      - name: 💾 Commit Fixes (nur Code-Dateien)
         run: |
+          # Alle Dateien zum Commit hinzufügen
           git add .
+          # Workflow-Dateien vom Commit ausschließen
+          git reset .github/workflows/*.yml || true
+          # Nur committen, wenn Änderungen vorhanden sind
           git diff --cached --quiet || git commit -m "🤖 Auto-Fix: Fehler automatisch behoben"
 
       - name: 🚀 Push Fixes
