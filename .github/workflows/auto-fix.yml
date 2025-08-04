@@ -8,13 +8,12 @@ on:
 jobs:
   auto-fix:
     runs-on: ubuntu-latest
-
     steps:
-      # 1️⃣ Repository auschecken
+      # 1️⃣ Repository-Code abrufen
       - name: 📂 Checkout Repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Node.js installieren
+      # 2️⃣ Node.js installieren (Version 18)
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -24,20 +23,20 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm install
 
-      # 4️⃣ Auto-Fix (Lint & Prettier)
+      # 4️⃣ Automatische Fehlerkorrekturen (ESLint, Prettier)
       - name: 🛠 Run Auto-Fix
         run: |
           npx eslint . --fix || true
           npx prettier --write . || true
 
-      # 5️⃣ Git konfigurieren
+      # 5️⃣ Git Config (für Bot-Commit)
       - name: ⚙️ Git Config
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      # 6️⃣ Änderungen committen (nur wenn es Änderungen gibt)
-      - name: 💾 Commit Fixes
+      # 6️⃣ Änderungen committen (nur wenn Änderungen vorhanden)
+      - name: ✅ Commit Fixes
         run: |
           git add .
           git diff --cached --quiet || git commit -m "🔧 Auto-Fix: Fehler automatisch behoben"
