@@ -1,4 +1,4 @@
-name: 🤖 Auto-Fix Workflow: automatisches Commit & Push
+name: 🤖 Auto-Fix Workflow
 
 on:
   push:
@@ -8,45 +8,39 @@ on:
 jobs:
   auto-fix:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
-      # 1️⃣ Repository-Code abrufen
-      - name: 📂 Checkout Repository
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Node.js installieren (Version 18)
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      # 3️⃣ Abhängigkeiten installieren
       - name: 📦 Install Dependencies
         run: npm install
 
-      # 4️⃣ Automatische Fehlerkorrekturen (ESLint, Prettier)
-      - name: 🛠 Run Auto-Fix
+      - name: 🔧 Run Auto-Fix
         run: |
           npx eslint . --fix || true
           npx prettier --write . || true
 
-      # 5️⃣ Git Config (für Bot-Commit)
       - name: ⚙️ Git Config
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      # 6️⃣ Änderungen committen (nur wenn Änderungen vorhanden)
-      - name: ✅ Commit Fixes
+      - name: 💾 Commit Fixes
         run: |
           git add .
-          git diff --cached --quiet || git commit -m "🔧 Auto-Fix: Fehler automatisch behoben"
+          git diff --cached --quiet || git commit -m "🤖 Auto-Fix: Fehler automatisch behoben"
 
-      # 7️⃣ Änderungen mit Token zurückpushen
-      # 7. Änderungen mit Token zurückpushen
-# 7. Änderungen mit Token zurückpushen
-- name: 🚀 Push Fixes
-  env:
-    TOKEN: ${{ secrets.AUTO_FIX_TOKEN }}
-  run: |
-    git remote set-url origin https://x-access-token:${TOKEN}@github.com/Shanabananarama/mein-tailwind-projekt.git
-    git push origin HEAD:main
+      - name: 🚀 Push Fixes
+        env:
+          TOKEN: ${{ secrets.AUTO_FIX_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:${TOKEN}@github.com/Shanabananarama/mein-tailwind-projekt.git
+          git push origin HEAD:main
