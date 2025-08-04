@@ -27,4 +27,4 @@ jobs:
 
       # 4️⃣ Projekt bauen (Vite Build)
       - name: 🏗 Build Project
-        run: npm run build
+        run: npm run buildyes
