@@ -42,9 +42,11 @@ jobs:
           git diff --cached --quiet || git commit -m "🔧 Auto-Fix: Fehler automatisch behoben"
 
       # 7️⃣ Änderungen mit Token zurückpushen
-      - name: 🚀 Push Fixes
-        env:
-          TOKEN: ${{ secrets.AUTO_FIX_TOKEN }}
-        run: |
-          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/Shanabananarama/mein-tailwind-projekt.git"
-          git push origin HEAD:main
+      # 7. Änderungen mit Token zurückpushen
+# 7. Änderungen mit Token zurückpushen
+- name: 🚀 Push Fixes
+  env:
+    TOKEN: ${{ secrets.AUTO_FIX_TOKEN }}
+  run: |
+    git remote set-url origin https://x-access-token:${TOKEN}@github.com/Shanabananarama/mein-tailwind-projekt.git
+    git push origin HEAD:main
