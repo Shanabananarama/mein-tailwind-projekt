@@ -4,27 +4,34 @@ on:
   push:
     branches:
       - main
-  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Repository-Code abrufen
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v3
+      # -----------------------------
+      # 1️⃣ Repository auschecken
+      # -----------------------------
+      - name: 📂 Checkout Repository
+        uses: actions/checkout@v4
 
-      # 2️⃣ Node.js installieren (Version 18 empfohlen)
+      # -----------------------------
+      # 2️⃣ Node.js einrichten
+      # -----------------------------
       - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: '20'
 
+      # -----------------------------
       # 3️⃣ Abhängigkeiten installieren
+      # -----------------------------
       - name: 📦 Install Dependencies
         run: npm install
 
-      # 4️⃣ Projekt bauen (Vite Build)
+      # -----------------------------
+      # 4️⃣ Projekt builden (KORREKT)
+      # -----------------------------
       - name: 🏗 Build Project
-        run: npm run buildyes
+        run: npm run build

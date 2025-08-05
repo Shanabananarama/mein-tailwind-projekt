@@ -6,12 +6,12 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   auto-fix:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
 
     steps:
       # -----------------------------
@@ -43,7 +43,7 @@ jobs:
         run: npm run build
 
       # -----------------------------
-      # 5️⃣ Linting & automatische Fehlerbehebung
+      # 5️⃣ Linting & Auto-Fix
       # -----------------------------
       - name: 🛠️ Run ESLint Auto-Fix
         run: npx eslint . --ext .js,.jsx,.ts,.tsx --fix || true
@@ -57,16 +57,16 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       # -----------------------------
-      # 7️⃣ Änderungen committen (nur Code-Dateien)
+      # 7️⃣ Änderungen committen
       # -----------------------------
-      - name: 💾 Commit Fixes (nur Code-Dateien)
+      - name: 💾 Commit Fixes
         run: |
           git add .
           git reset .github/workflows/*.yml || true
           git diff --cached --quiet || git commit -m "🤖 Auto-Fix: Fehler automatisch behoben"
 
       # -----------------------------
-      # 8️⃣ Änderungen mit Token pushen
+      # 8️⃣ Änderungen pushen
       # -----------------------------
       - name: 🚀 Push Fixes
         env:
