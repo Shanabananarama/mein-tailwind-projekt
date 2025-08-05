@@ -3,9 +3,10 @@ export default [
     files: ["**/*.js"],
     languageOptions: {
       globals: {
-        js: "readonly",
-        console: "readonly"   // ✅ Neu hinzugefügt
-      }
+        window: "readonly",
+        document: "readonly",
+        console: "readonly", // ✅ hinzugefügt
+      },
     },
     rules: {
       "no-unused-vars": "warn",
