@@ -7,7 +7,9 @@ export default [
         document: "readonly",
         console: "readonly",
         module: "readonly",
-        js: "readonly"
+        js: "readonly",
+        fetch: "readonly",
+        MutationObserver: "readonly"
       }
     },
     rules: {
