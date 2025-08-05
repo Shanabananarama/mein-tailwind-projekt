@@ -1,33 +1,33 @@
 name: 🤖 Auto-Fix Workflow
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   auto-fix:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
-      - name: 📂 Checkout Repository
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v3
 
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: '18'
+          cache: 'npm'
 
       - name: 📦 Install Dependencies
         run: npm install
 
-      - name: 🛠 Run Auto-Fix
-        run: |
-          npx eslint . --fix || true
-          npx prettier --write . || true
+      - name: 🧹 Run ESLint Auto-Fix
+        run: npx eslint . --ext .js,.jsx,.ts,.tsx --fix || true
+
+      - name: 🏗 Build Project
+        run: npm run build
 
       - name: ⚙️ Git Config
         run: |
