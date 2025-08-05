@@ -1,51 +1,68 @@
 name: 🤖 Auto-Fix Workflow
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   auto-fix:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v3
+      # -----------------------------
+      # 1️⃣ Repository auschecken
+      # -----------------------------
+      - name: 📂 Checkout Repository
+        uses: actions/checkout@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          token: ${{ secrets.AUTO_FIX_TOKEN }}
 
+      # -----------------------------
+      # 2️⃣ Node.js einrichten
+      # -----------------------------
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # -----------------------------
+      # 3️⃣ Abhängigkeiten installieren
+      # -----------------------------
       - name: 📦 Install Dependencies
         run: npm install
 
-      - name: 🧹 Run ESLint Auto-Fix
+      # -----------------------------
+      # 4️⃣ Linting & automatische Fehlerbehebung
+      # -----------------------------
+      - name: 🛠️ Run ESLint Auto-Fix
         run: npx eslint . --ext .js,.jsx,.ts,.tsx --fix || true
 
-      - name: 🏗 Build Project
-        run: npm run build
-
+      # -----------------------------
+      # 5️⃣ Git Config einrichten
+      # -----------------------------
       - name: ⚙️ Git Config
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      # -----------------------------
+      # 6️⃣ Änderungen committen (nur Code-Dateien)
+      # -----------------------------
       - name: 💾 Commit Fixes (nur Code-Dateien)
         run: |
-          # Alle Dateien zum Commit hinzufügen
           git add .
-          # Workflow-Dateien vom Commit ausschließen
           git reset .github/workflows/*.yml || true
-          # Nur committen, wenn Änderungen vorhanden sind
           git diff --cached --quiet || git commit -m "🤖 Auto-Fix: Fehler automatisch behoben"
 
+      # -----------------------------
+      # 7️⃣ Änderungen mit Token pushen
+      # -----------------------------
       - name: 🚀 Push Fixes
         env:
           TOKEN: ${{ secrets.AUTO_FIX_TOKEN }}
         run: |
           git remote set-url origin https://x-access-token:${TOKEN}@github.com/Shanabananarama/mein-tailwind-projekt.git
+          git pull --rebase origin main
           git push origin HEAD:main
