@@ -1,4 +1,4 @@
-name: 🤖 Auto‑Fix Workflow
+name: 🤖 Auto-Fix Workflow
 
 on:
   workflow_dispatch:
@@ -7,40 +7,64 @@ on:
       - main
 
 jobs:
-  auto‑fix:
-    runs‑on: ubuntu‑latest
+  auto-fix:
+    runs-on: ubuntu-latest
 
     steps:
+      # -----------------------------
+      # 1️⃣ Repository auschecken
+      # -----------------------------
       - name: 📂 Checkout Repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.AUTO_FIX_TOKEN }}
 
+      # -----------------------------
+      # 2️⃣ Node.js einrichten
+      # -----------------------------
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
+      # -----------------------------
+      # 3️⃣ Abhängigkeiten installieren
+      # -----------------------------
       - name: 📦 Install Dependencies
         run: npm install
 
+      # -----------------------------
+      # 4️⃣ Projekt builden
+      # -----------------------------
       - name: 🏗 Build Project
         run: npm run build
 
-      - name: 🛠️ Run ESLint Auto‑Fix
+      # -----------------------------
+      # 5️⃣ Linting & automatische Fehlerbehebung
+      # -----------------------------
+      - name: 🛠️ Run ESLint Auto-Fix
         run: npx eslint . --ext .js,.jsx,.ts,.tsx --fix || true
 
+      # -----------------------------
+      # 6️⃣ Git Config einrichten
+      # -----------------------------
       - name: ⚙️ Git Config
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      # -----------------------------
+      # 7️⃣ Änderungen committen (nur Code-Dateien)
+      # -----------------------------
       - name: 💾 Commit Fixes (nur Code-Dateien)
         run: |
           git add .
           git reset .github/workflows/*.yml || true
-          git diff --cached --quiet || git commit -m "🤖 Auto‑Fix: Fehler automatisch behoben"
+          git diff --cached --quiet || git commit -m "🤖 Auto-Fix: Fehler automatisch behoben"
 
+      # -----------------------------
+      # 8️⃣ Änderungen mit Token pushen
+      # -----------------------------
       - name: 🚀 Push Fixes
         env:
           TOKEN: ${{ secrets.AUTO_FIX_TOKEN }}
