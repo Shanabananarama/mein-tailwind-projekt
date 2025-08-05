@@ -30,6 +30,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   } catch (error) {
     console.error("Fehler beim Laden der Karten:", error);
-    cardsGrid.innerHTML = `<p class="text-red-500">Fehler beim Laden der Karten.</p>`;
+    cardsGrid.innerHTML = "<p class=\"text-red-500\">Fehler beim Laden der Karten.</p>";
   }
 });
