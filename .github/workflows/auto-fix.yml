@@ -34,13 +34,19 @@ jobs:
         run: npm install
 
       # -----------------------------
-      # 4️⃣ Linting & automatische Fehlerbehebung
+      # 4️⃣ Projekt builden
+      # -----------------------------
+      - name: 🏗 Build Project
+        run: npm run build
+
+      # -----------------------------
+      # 5️⃣ Linting & automatische Fehlerbehebung
       # -----------------------------
       - name: 🛠️ Run ESLint Auto-Fix
         run: npx eslint . --ext .js,.jsx,.ts,.tsx --fix || true
 
       # -----------------------------
-      # 5️⃣ Git Config einrichten
+      # 6️⃣ Git Config einrichten
       # -----------------------------
       - name: ⚙️ Git Config
         run: |
@@ -48,7 +54,7 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       # -----------------------------
-      # 6️⃣ Änderungen committen (nur Code-Dateien)
+      # 7️⃣ Änderungen committen (nur Code-Dateien)
       # -----------------------------
       - name: 💾 Commit Fixes (nur Code-Dateien)
         run: |
@@ -57,7 +63,7 @@ jobs:
           git diff --cached --quiet || git commit -m "🤖 Auto-Fix: Fehler automatisch behoben"
 
       # -----------------------------
-      # 7️⃣ Änderungen mit Token pushen
+      # 8️⃣ Änderungen mit Token pushen
       # -----------------------------
       - name: 🚀 Push Fixes
         env:
