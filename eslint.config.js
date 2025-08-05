@@ -3,16 +3,15 @@ export default [
     files: ["**/*.js"],
     languageOptions: {
       globals: {
-        js: "readonly",
-        document: "readonly",
         window: "readonly",
+        document: "readonly",
         console: "readonly",
         module: "readonly"
       }
     },
     rules: {
       "no-unused-vars": "warn",
-      "no-undef": "off",
+      "no-undef": "error",
       "semi": ["warn", "always"],
       "quotes": ["warn", "double"]
     }
