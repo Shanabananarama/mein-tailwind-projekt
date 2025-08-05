@@ -4,7 +4,7 @@
 // ==========================================
 
 function sagHallo(name) {
-    console.log("Hallo " + name);
+  console.log("Hallo " + name);
 }
 
 sagHallo("Nils");
