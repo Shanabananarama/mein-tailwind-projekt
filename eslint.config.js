@@ -6,7 +6,8 @@ export default [
         window: "readonly",
         document: "readonly",
         console: "readonly",
-        module: "readonly"
+        module: "readonly",
+        js: "readonly"
       }
     },
     rules: {
