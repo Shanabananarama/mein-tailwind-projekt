@@ -1,4 +1,4 @@
-name: Fixed Auto-PR workflow with Personal Access Token
+name: Auto Pull Request Workflow
 
 on:
   push:
@@ -10,53 +10,34 @@ permissions:
   pull-requests: write
 
 jobs:
-  build:
+  create-pull-request:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/checkout@v3
         with:
-          node-version: '18'
+          fetch-depth: 0
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build Project
-        run: npm run build
-
-      - name: Run ESLint Auto-Fix
-        run: npx eslint . --fix || true
-
-      - name: Git Config
+      - name: Configure Git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Create Fix Branch
-        run: |
-          git checkout -b auto-fix-${{ github.run_id }}
-
-      - name: Commit Fixes
-        run: |
-          git add .
-          git commit -m "Auto-Fix: ESLint corrections" || echo "No changes to commit"
-
-      - name: Push Fix Branch
+      - name: Create New Branch
         env:
-          TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
-          git push https://x-access-token:${TOKEN}@github.com/${{ github.repository }} HEAD:auto-fix-${{ github.run_id }}
+          BRANCH_NAME=auto-pr-$(date +'%Y%m%d%H%M%S')
+          git checkout -b $BRANCH_NAME
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} $BRANCH_NAME
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          commit-message: "Auto PR: Fixes applied"
-          title: "Auto PR: ESLint Auto-Fixes"
-          body: "This pull request contains automatic ESLint fixes from GitHub Actions."
-          branch: auto-fix-${{ github.run_id }}
+          commit-message: "Automated PR - Auto Fixes"
+          branch: ${{ github.ref }}
+          title: "Automated PR: Auto Fixes"
+          body: "This PR was automatically created by the Auto-Fix Workflow."
           base: main
