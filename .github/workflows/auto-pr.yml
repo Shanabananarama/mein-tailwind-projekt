@@ -28,6 +28,16 @@ jobs:
           git commit --allow-empty -m "Automated PR commit"
           git push origin $BRANCH_NAME
 
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+          sudo apt-add-repository https://cli.github.com/packages
+          sudo apt update
+          sudo apt install gh -y
+
+      - name: Authenticate GitHub CLI
+        run: echo "${{ secrets.PERSONAL_ACCESS_TOKEN }}" | gh auth login --with-token
+
       - name: Create Pull Request via CLI
         run: |
           BRANCH_NAME="auto-pr-${{ github.run_id }}"
@@ -36,5 +46,3 @@ jobs:
             --head $BRANCH_NAME \
             --title "Automated Pull Request" \
             --body "This PR was automatically created using GitHub CLI and PAT."
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
