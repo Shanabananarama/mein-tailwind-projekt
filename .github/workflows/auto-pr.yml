@@ -8,30 +8,28 @@ on:
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
+
     steps:
-      - name: 🛠 Repository auschecken
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: 🔧 Änderungen erfassen
+      - name: Set up Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: 📦 Abhängigkeiten installieren
+      - name: Create new branch
         run: |
-          npm install
+          BRANCH_NAME="auto-pr-$(date +'%Y%m%d%H%M%S')"
+          git checkout -b $BRANCH_NAME
+          git push origin $BRANCH_NAME
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
-      - name: 📝 Neuen Branch erstellen
-        run: |
-          BRANCH_NAME="auto-fix-${{ github.run_id }}"
-          git checkout -b "$BRANCH_NAME"
-          git push origin "$BRANCH_NAME"
-
-      - name: 🤖 Pull Request erstellen
-        uses: peter-evans/create-pull-request@v5
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
         with:
-          token: ${{ secrets.AUTO_FIX_TOKEN }}
-          branch: "auto-fix-${{ github.run_id }}"
-          title: "🤖 Auto-Fix: Fehler automatisch behoben"
-          body: "Dieser PR wurde automatisch erstellt, um gefundene Fehler zu beheben."
-          base: "main"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "Auto PR: Updates"
+          body: "This PR was created automatically."
+          base: main
+          branch: ${{ env.BRANCH_NAME }}
