@@ -1,45 +1,46 @@
-name: Fixed AutoPR workflow with Personal Access Token
+name: Auto Pull Request Workflow
 
 on:
-  push:
-    branches:
-      - main
-
-permissions:
-  contents: write
-  pull-requests: write
+  workflow_dispatch:
 
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure Git
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Create Branch
+      - name: Create new branch
         run: |
-          BRANCH_NAME="auto-pr-$(date +%Y%m%d%H%M%S)"
+          BRANCH_NAME=auto-pr-$(date +'%Y%m%d%H%M%S')
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
-          git checkout -b "$BRANCH_NAME"
-          echo "Automated change $(date)" >> auto-pr-log.txt
-          git add auto-pr-log.txt
+          git checkout -b $BRANCH_NAME
+          echo "### Auto generated file $(date)" >> AUTOPR_TEST.txt
+          git add .
           git commit -m "Automated commit from workflow"
-          git push "https://x-access-token:${GITHUB_PAT}@github.com/${GITHUB_REPOSITORY}" "$BRANCH_NAME"
-        env:
-          GITHUB_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }} HEAD:$BRANCH_NAME
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          commit-message: "Automated Pull Request"
-          branch: ${{ env.BRANCH_NAME }}
-          base: main
-          title: "Automated Pull Request"
-          body: "This is an auto-generated PR using PAT."
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh -y
+
+      - name: Authenticate GitHub CLI
+        run: gh auth login --with-token <<< "${{ secrets.PERSONAL_ACCESS_TOKEN }}"
+
+      - name: Create Pull Request via CLI
+        run: |
+          gh pr create \
+            --repo ${{ github.repository }} \
+            --base main \
+            --head ${{ env.BRANCH_NAME }} \
+            --title "Automated Pull Request" \
+            --body "This PR was automatically created using GitHub CLI and PAT."
