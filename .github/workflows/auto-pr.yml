@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch: # Ermöglicht manuelles Starten über GitHub Actions
 
 permissions:
   contents: write
@@ -13,25 +14,26 @@ jobs:
   create-pull-request:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure Git
+      - name: Set up Git user
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Create New Branch
+      - name: Create new branch
         run: |
-          BRANCH_NAME=auto-pr-$(date +%Y%m%d%H%M%S)
+          BRANCH_NAME="auto-pr-$(date +'%Y%m%d%H%M%S')"
           git checkout -b "$BRANCH_NAME"
-          git push origin "$BRANCH_NAME"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} "$BRANCH_NAME"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          commit-message: "Auto PR Commit"
-          branch: ${{ github.head_ref || 'auto-pr-branch' }}
-          title: "Auto PR - Code Update"
-          body: "Automatisierter Pull Request Workflow"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Automated Pull Request"
+          branch: ${{ github.ref_name }}
+          base: main
+          title: "Automated Pull Request"
+          body: "This is an auto-generated PR."
