@@ -23,6 +23,7 @@ jobs:
           BRANCH_NAME="auto-pr-$(date +'%Y%m%d%H%M%S')"
           git checkout -b "$BRANCH_NAME"
           git push origin "$BRANCH_NAME"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -30,7 +31,7 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref_name }}
+          branch: ${{ env.BRANCH_NAME }}
           base: main
           title: "Automatischer Pull Request"
           body: "Dieser Pull Request wurde automatisch erstellt."
