@@ -1,7 +1,6 @@
-name: 🤖 Auto Pull Request Workflow
+name: Auto Pull Request Workflow
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
@@ -9,79 +8,30 @@ on:
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
-
     steps:
-      # -----------------------------
-      # 1️⃣ Repository auschecken
-      # -----------------------------
-      - name: 📂 Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.AUTO_FIX_TOKEN }}
+      - name: 🛠 Repository auschecken
+        uses: actions/checkout@v3
 
-      # -----------------------------
-      # 2️⃣ Node.js einrichten
-      # -----------------------------
-      - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      # -----------------------------
-      # 3️⃣ Abhängigkeiten installieren
-      # -----------------------------
-      - name: 📦 Install Dependencies
-        run: npm install
-
-      # -----------------------------
-      # 4️⃣ Projekt builden
-      # -----------------------------
-      - name: 🏗 Build Project
-        run: npm run build
-
-      # -----------------------------
-      # 5️⃣ Git konfigurieren
-      # -----------------------------
-      - name: ⚙️ Git Config
+      - name: 🔧 Änderungen erfassen
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      # -----------------------------
-      # 6️⃣ Neuen Branch erstellen
-      # -----------------------------
-      - name: 🌱 Create Branch
+      - name: 📦 Abhängigkeiten installieren
         run: |
-          BRANCH_NAME="auto-task-$(date +'%Y%m%d%H%M%S')"
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
-          git checkout -b $BRANCH_NAME
+          npm install
 
-      # -----------------------------
-      # 7️⃣ Änderungen committen
-      # -----------------------------
-      - name: 💾 Commit Changes
+      - name: 📝 Neuen Branch erstellen
         run: |
-          git add .
-          git diff --cached --quiet || git commit -m "🤖 Auto Task Update"
+          BRANCH_NAME="auto-fix-${{ github.run_id }}"
+          git checkout -b "$BRANCH_NAME"
+          git push origin "$BRANCH_NAME"
 
-      # -----------------------------
-      # 8️⃣ Änderungen pushen
-      # -----------------------------
-      - name: 🚀 Push Changes
-        env:
-          TOKEN: ${{ secrets.AUTO_FIX_TOKEN }}
-        run: |
-          git remote set-url origin https://x-access-token:${TOKEN}@github.com/Shanabananarama/mein-tailwind-projekt.git
-          git push origin HEAD:$BRANCH_NAME
-
-      # -----------------------------
-      # 9️⃣ Pull Request erstellen
-      # -----------------------------
-      - name: 🔀 Create Pull Request
+      - name: 🤖 Pull Request erstellen
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.AUTO_FIX_TOKEN }}
-          commit-message: "🤖 Auto Task Update"
-          branch: ${{ env.BRANCH_NAME }}
-          title: "🤖 Automatischer Task Update"
-          body: "Dieser PR wurde automatisch erstellt und enthält Änderungen für die neue Aufgabe."
+          branch: "auto-fix-${{ github.run_id }}"
+          title: "🤖 Auto-Fix: Fehler automatisch behoben"
+          body: "Dieser PR wurde automatisch erstellt, um gefundene Fehler zu beheben."
+          base: "main"
