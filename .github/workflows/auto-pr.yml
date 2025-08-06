@@ -1,4 +1,4 @@
-name: Auto PR Workflow
+name: Auto Pull Request Workflow
 
 on:
   workflow_dispatch:
@@ -6,6 +6,7 @@ on:
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
+
     env:
       GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
@@ -35,3 +36,5 @@ jobs:
             --head $BRANCH_NAME \
             --title "Automated Pull Request" \
             --body "This PR was automatically created using GitHub CLI and PAT."
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
