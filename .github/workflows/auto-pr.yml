@@ -1,4 +1,4 @@
-name: Auto Pull Request Workflow
+name: Fixed Auto-PR workflow with Personal Access Token
 
 on:
   push:
@@ -10,31 +10,53 @@ permissions:
   pull-requests: write
 
 jobs:
-  create-pull-request:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
-      - name: Create New Branch
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Run ESLint Auto-Fix
+        run: npx eslint . --fix || true
+
+      - name: Git Config
         run: |
-          BRANCH_NAME=auto-pr-$(date +'%Y%m%d%H%M%S')
-          git checkout -b $BRANCH_NAME
-          echo "Auto-PR Workflow Commit" >> auto-pr-testfile.txt
-          git add auto-pr-testfile.txt
-          git commit -m "Auto-PR Workflow Commit"
-          git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }} $BRANCH_NAME
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Fix Branch
+        run: |
+          git checkout -b auto-fix-${{ github.run_id }}
+
+      - name: Commit Fixes
+        run: |
+          git add .
+          git commit -m "Auto-Fix: ESLint corrections" || echo "No changes to commit"
+
+      - name: Push Fix Branch
+        env:
+          TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          git push https://x-access-token:${TOKEN}@github.com/${{ github.repository }} HEAD:auto-fix-${{ github.run_id }}
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          branch: ${{ github.ref_name }}
-          title: "Automated Pull Request"
-          body: "This is an automated PR created by GitHub Actions."
+          commit-message: "Auto PR: Fixes applied"
+          title: "Auto PR: ESLint Auto-Fixes"
+          body: "This pull request contains automatic ESLint fixes from GitHub Actions."
+          branch: auto-fix-${{ github.run_id }}
+          base: main
