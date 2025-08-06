@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 permissions:
   contents: write
@@ -14,25 +13,26 @@ jobs:
   create-pull-request:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Set up Git user
+      - name: Configure Git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Create new branch and push
+      - name: Create Branch
         run: |
-          BRANCH_NAME="auto-pr-$(date +'%Y%m%d%H%M%S')"
+          BRANCH_NAME="auto-pr-$(date +%Y%m%d%H%M%S)"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           git checkout -b "$BRANCH_NAME"
-          git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }} "$BRANCH_NAME"
-
-      - name: Wait for GitHub to register new branch
-        run: |
-          echo "Warte 10 Sekunden, damit GitHub den neuen Branch erkennt..."
-          sleep 10
+          echo "Automated change $(date)" >> auto-pr-log.txt
+          git add auto-pr-log.txt
+          git commit -m "Automated commit from workflow"
+          git push "https://x-access-token:${GITHUB_PAT}@github.com/${GITHUB_REPOSITORY}" "$BRANCH_NAME"
+        env:
+          GITHUB_PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
