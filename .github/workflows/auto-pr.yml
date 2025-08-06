@@ -13,23 +13,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Git
+      - name: Setup Git
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Create new branch
         run: |
           BRANCH_NAME="auto-pr-$(date +'%Y%m%d%H%M%S')"
-          git checkout -b $BRANCH_NAME
-          git push origin $BRANCH_NAME
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          git checkout -b "$BRANCH_NAME"
+          git push origin "$BRANCH_NAME"
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          title: "Auto PR: Updates"
-          body: "This PR was created automatically."
+          commit-message: "Auto PR: Changes from main"
+          branch: ${{ github.ref_name }}
           base: main
-          branch: ${{ env.BRANCH_NAME }}
+          title: "Auto PR: Changes from main"
+          body: "This is an automated pull request."
