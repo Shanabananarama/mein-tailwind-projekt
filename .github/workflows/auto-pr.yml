@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # Ermöglicht manuelles Starten über GitHub Actions
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -26,14 +26,14 @@ jobs:
         run: |
           BRANCH_NAME="auto-pr-$(date +'%Y%m%d%H%M%S')"
           git checkout -b "$BRANCH_NAME"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} "$BRANCH_NAME"
+          git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }} "$BRANCH_NAME"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           commit-message: "Automated Pull Request"
           branch: ${{ github.ref_name }}
           base: main
           title: "Automated Pull Request"
-          body: "This is an auto-generated PR."
+          body: "This is an auto-generated PR using PAT."
