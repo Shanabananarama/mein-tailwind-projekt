@@ -71,4 +71,4 @@ jobs:
           branch: ${{ env.BRANCH_NAME }}
           title: "🤖 Auto-Fix: Fehler automatisch behoben"
           body: "Dieser PR wurde automatisch erstellt, um gefundene Fehler zu beheben."
-          base: main
+          base: main<
