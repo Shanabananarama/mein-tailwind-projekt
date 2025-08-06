@@ -22,9 +22,10 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Create new branch
+      - name: Create new branch and push
         run: |
           BRANCH_NAME="auto-pr-$(date +'%Y%m%d%H%M%S')"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           git checkout -b "$BRANCH_NAME"
           git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }} "$BRANCH_NAME"
 
@@ -33,7 +34,7 @@ jobs:
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           commit-message: "Automated Pull Request"
-          branch: ${{ github.ref_name }}
+          branch: ${{ env.BRANCH_NAME }}
           base: main
           title: "Automated Pull Request"
           body: "This is an auto-generated PR using PAT."
