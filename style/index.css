@@ -1,0 +1,71 @@
+/* style/index.css */
+
+/* --- Allgemeine Seiteneinstellungen --- */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+/* --- Container für gesamten Inhalt --- */
+.container {
+    width: 100%;
+    max-width: 1200px;
+}
+
+/* --- Ladehinweis --- */
+.loading-text {
+    font-size: 16px;
+    color: #555;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* --- Karten-Grid --- */
+#cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    padding: 10px;
+    justify-items: center;
+}
+
+/* --- Einzelne Karte --- */
+.card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    padding: 15px;
+    text-align: center;
+    width: 100%;
+    max-width: 300px;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* --- Kartenbild --- */
+.card img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+/* --- Kartentitel --- */
+.card h2 {
+    font-size: 20px;
+    margin: 10px 0;
+    color: #333;
+}
+
+/* --- Kartentext --- */
+.card p {
+    font-size: 14px;
+    color: #666;
+}
