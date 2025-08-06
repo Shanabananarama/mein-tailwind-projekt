@@ -1,0 +1,16 @@
+[
+    {
+        "id": 1,
+        "name": "Spider-Man",
+        "series": "Marvel Topps Chrome 2024",
+        "price": 19.99,
+        "image": "spiderman.jpg"
+    },
+    {
+        "id": 999,
+        "name": "Test-Karte",
+        "series": "Workflow Token Check",
+        "price": 0.01,
+        "image": "test.jpg"
+    }
+]
