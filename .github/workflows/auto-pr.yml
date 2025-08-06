@@ -1,4 +1,4 @@
-name: Fixed Auto‑PR workflow with Personal Access Token
+name: Fixed AutoPR workflow with Personal Access Token
 
 on:
   push:
@@ -7,40 +7,31 @@ on:
 
 permissions:
   contents: write
-  pull‑requests: write
+  pull-requests: write
 
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Configure Git
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-    - name: Create new branch
-      env:
-        PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-      run: |
-        BRANCH=auto-pr-${{ github.run_id }}
-        git checkout -b $BRANCH
-        echo "Auto‑PR test $(date)" > pr‑test.txt
-        git add pr‑test.txt
-        git commit -m "Auto‑PR test commit"
-        git push https://x-access-token:${PAT}@github.com/${{ github.repository }} $BRANCH
+      - name: Create New Branch
+        run: |
+          BRANCH_NAME=auto-pr-$(date +%Y%m%d%H%M%S)
+          git checkout -b "$BRANCH_NAME"
+          git push origin "$BRANCH_NAME"
 
-    - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v6
-      with:
-        token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        commit-message: "Auto‑PR: automatic changes"
-        branch: auto-pr-${{ github.run_id }}
-        title: "Auto‑PR: automated fixes"
-        body: "This pull request was created automatically by the workflow."
-        base: main
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          commit-message: "Auto PR Commit"
+          branch: ${{ github.head_ref || 'auto-pr-branch' }}
+          title: "Auto PR - Code Update"
+          body: "Automatisierter Pull Request Workflow"
