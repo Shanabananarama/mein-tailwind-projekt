@@ -1,17 +1,21 @@
 name: Auto Pull Request Workflow
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Configure Git
         run: |
@@ -22,16 +26,15 @@ jobs:
         run: |
           BRANCH_NAME=auto-pr-$(date +'%Y%m%d%H%M%S')
           git checkout -b $BRANCH_NAME
-          echo "Test-Änderung $(date)" >> auto-pr-testfile.txt
-          git add .
+          echo "Auto-PR Workflow Commit" >> auto-pr-testfile.txt
+          git add auto-pr-testfile.txt
           git commit -m "Auto-PR Workflow Commit"
-          git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }}.git $BRANCH_NAME
+          git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }} $BRANCH_NAME
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           branch: ${{ github.ref_name }}
-          title: "Auto PR - Workflow Test"
-          body: "Dieser Pull Request wurde automatisch erstellt."
-          base: main
+          title: "Automated Pull Request"
+          body: "This is an automated PR created by GitHub Actions."
