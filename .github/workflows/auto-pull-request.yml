@@ -1,0 +1,35 @@
+name: Auto Pull Request Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create-pull-request:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create New Branch
+        run: |
+          BRANCH_NAME=auto-pr-$(date +%Y%m%d%H%M%S)
+          git checkout -b "$BRANCH_NAME"
+          git push origin "$BRANCH_NAME"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.AUTO_FIX_TOKEN }}
+          commit-message: "Auto PR: Änderungen automatisch erstellt"
+          title: "Auto PR: Änderungen automatisch erstellt"
+          body: "Dieser Pull Request wurde automatisch vom Auto-Fix Workflow erstellt."
+          branch: ${{ github.ref_name }}
+          base: main
