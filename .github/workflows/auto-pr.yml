@@ -29,6 +29,11 @@ jobs:
           git checkout -b "$BRANCH_NAME"
           git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }} "$BRANCH_NAME"
 
+      - name: Wait for GitHub to register new branch
+        run: |
+          echo "Warte 10 Sekunden, damit GitHub den neuen Branch erkennt..."
+          sleep 10
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
