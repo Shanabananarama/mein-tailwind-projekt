@@ -1,78 +1,54 @@
 name: 🤖 Auto-Fix Workflow
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
-
-permissions:
-  contents: write
-  pull-requests: write
 
 jobs:
   auto-fix:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Repository auschecken
-      - name: 📂 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.AUTO_FIX_TOKEN }}
 
-      # 2️⃣ Node.js einrichten
-      - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      # 3️⃣ Abhängigkeiten installieren
-      - name: 📦 Install Dependencies
+      - name: Install Dependencies
         run: npm install
 
-      # 4️⃣ Projekt builden
-      - name: 🏗 Build Project
+      - name: Build Project
         run: npm run build
 
-      # 5️⃣ Linting & automatische Fehlerbehebung
-      - name: 🛠️ Run ESLint Auto-Fix
-        run: npx eslint . --ext .js,.jsx,.ts,.tsx --fix || true
+      - name: Run ESLint Auto-Fix
+        run: npm run lint -- --fix
 
-      # 6️⃣ Git Config einrichten
-      - name: ⚙️ Git Config
+      - name: Git Config
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      # 7️⃣ Neue Branch für Fix erstellen
-      - name: 🌱 Create Fix Branch
+      - name: Create Fix Branch
         run: |
-          BRANCH="auto-fix-$(date +'%Y%m%d%H%M%S')"
-          git checkout -b "$BRANCH"
-          echo "BRANCH_NAME=$BRANCH" >> $GITHUB_ENV
+          BRANCH_NAME="auto-fix-$(date +'%Y%m%d%H%M%S')"
+          git checkout -b "$BRANCH_NAME"
 
-      # 8️⃣ Änderungen committen (nur Code-Dateien)
-      - name: 💾 Commit Fixes
+      - name: Commit Fixes
         run: |
           git add .
-          git reset .github/workflows/*.yml || true
-          git diff --cached --quiet || git commit -m "🤖 Auto-Fix: Fehler automatisch behoben"
+          git commit -m "Auto-Fix: ESLint fixes" || echo "Keine Änderungen zum Commit."
 
-      # 9️⃣ Änderungen pushen
-      - name: 🚀 Push Fix Branch
-        env:
-          TOKEN: ${{ secrets.AUTO_FIX_TOKEN }}
+      - name: Push Fix Branch
         run: |
-          git remote set-url origin https://x-access-token:${TOKEN}@github.com/Shanabananarama/mein-tailwind-projekt.git
-          git push origin HEAD:$BRANCH_NAME
+          BRANCH_NAME=$(git branch --show-current)
+          git push https://x-access-token:${{ secrets.AUTO_FIX_TOKEN }}@github.com/${{ github.repository }} "$BRANCH_NAME"
 
-      # 🔟 Automatisch Pull Request erstellen
-      - name: 🔀 Create Pull Request
+      - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.AUTO_FIX_TOKEN }}
-          branch: ${{ env.BRANCH_NAME }}
-          title: "🤖 Auto-Fix: Fehler automatisch behoben"
-          body: "Dieser PR wurde automatisch erstellt, um gefundene Fehler zu beheben."
-          base: main
+          commit-message: "Auto-Fix: ESLint fixes"
+          title: "Auto-Fix: ESLint fixes"
+          body: "Dieser Pull Request wurde automatisch vom Auto-Fix Workflow erstellt."
+          branch: ${{ github.ref }}
