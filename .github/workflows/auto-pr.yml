@@ -1,20 +1,12 @@
-name: Auto PR Workflow Using PAT
+name: Auto PR Workflow
 
 on:
-  push:
-    branches:
-      - main
-
-permissions:
-  contents: write
-  pull-requests: write
+  workflow_dispatch:
 
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
-
     env:
-      BRANCH_NAME: auto-pr-${{ github.run_id }}
       GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
     steps:
@@ -30,12 +22,14 @@ jobs:
 
       - name: Create empty commit and push
         run: |
+          BRANCH_NAME="auto-pr-${{ github.run_id }}"
           git checkout -b $BRANCH_NAME
           git commit --allow-empty -m "Automated PR commit"
           git push origin $BRANCH_NAME
 
       - name: Create Pull Request via CLI
         run: |
+          BRANCH_NAME="auto-pr-${{ github.run_id }}"
           gh pr create \
             --base main \
             --head $BRANCH_NAME \
