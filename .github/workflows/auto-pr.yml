@@ -1,46 +1,43 @@
-name: Auto Pull Request Workflow
+name: Auto PR Workflow Using PAT
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-      pull-requests: write
+    env:
+      BRANCH_NAME: auto-pr-${{ github.run_id }}
+      GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout with PAT
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Create new branch
+      - name: Create empty commit and push
         run: |
-          BRANCH_NAME=auto-pr-$(date +'%Y%m%d%H%M%S')
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           git checkout -b $BRANCH_NAME
-          echo "### Auto generated file $(date)" >> AUTOPR_TEST.txt
-          git add .
-          git commit -m "Automated commit from workflow"
-          git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }} HEAD:$BRANCH_NAME
-
-      - name: Install GitHub CLI
-        run: sudo apt-get install gh -y
-
-      - name: Authenticate GitHub CLI
-        run: gh auth login --with-token <<< "${{ secrets.PERSONAL_ACCESS_TOKEN }}"
+          git commit --allow-empty -m "Automated PR commit"
+          git push origin $BRANCH_NAME
 
       - name: Create Pull Request via CLI
         run: |
           gh pr create \
-            --repo ${{ github.repository }} \
             --base main \
-            --head ${{ env.BRANCH_NAME }} \
+            --head $BRANCH_NAME \
             --title "Automated Pull Request" \
             --body "This PR was automatically created using GitHub CLI and PAT."
