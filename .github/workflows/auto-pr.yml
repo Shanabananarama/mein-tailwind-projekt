@@ -10,26 +10,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Setup Git
+      - name: Configure Git
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Create new branch
+      - name: Create Branch
         run: |
           BRANCH_NAME="auto-pr-$(date +'%Y%m%d%H%M%S')"
           git checkout -b "$BRANCH_NAME"
           git push origin "$BRANCH_NAME"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Auto PR: Changes from main"
           branch: ${{ github.ref_name }}
           base: main
-          title: "Auto PR: Changes from main"
-          body: "This is an automated pull request."
+          title: "Automatischer Pull Request"
+          body: "Dieser Pull Request wurde automatisch erstellt."
