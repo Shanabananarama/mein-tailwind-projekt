@@ -6,10 +6,8 @@ on:
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
-
     env:
       BRANCH_NAME: auto-pr-${{ github.run_id }}
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -31,5 +29,5 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           base: main
           head: ${{ env.BRANCH_NAME }}
-          title: "Automated Pull Request"
-          body: "This PR was automatically created using GitHub CLI and PAT."
+          title: Automated Pull Request
+          body: This PR was automatically created using GitHub CLI and PAT.
