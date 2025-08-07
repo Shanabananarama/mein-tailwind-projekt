@@ -1,30 +1,23 @@
+name: Auto Pull Request
+
 on:
   workflow_dispatch:
 
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
-    env:
-      BRANCH_NAME: auto-pr-$(date +%s)
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Neues Branch erstellen
-        run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git checkout -b $BRANCH_NAME
-          git commit --allow-empty -m "Trigger PR"
-          git push origin $BRANCH_NAME
-
-      - name: Pull Request erstellen
+      - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           base: main
-          branch: ${{ env.BRANCH_NAME }}
+          # branches unique by timestamp avoids reuse/conflict
+          branch: auto-pr-${{ github.run_id }}
           title: Auto Pull Request
           body: |
             This PR was automatically created using workflow_dispatch.
-          draft: false
+          delete-branch: true
