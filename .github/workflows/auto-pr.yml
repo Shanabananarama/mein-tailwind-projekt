@@ -1,4 +1,4 @@
-name: Auto Pull Request Workflow
+name: Create Pull Request
 
 on:
   workflow_dispatch:
@@ -6,7 +6,6 @@ on:
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
-
     env:
       GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
@@ -16,34 +15,21 @@ jobs:
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
-          sudo apt-add-repository https://cli.github.com/packages
-          sudo apt-get update
-          sudo apt-get install gh -y
-
-      - name: Authenticate GitHub CLI
-        run: |
-          echo "${{ secrets.PERSONAL_ACCESS_TOKEN }}" | gh auth login --with-token
-
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Create new branch, commit and push
+      - name: Create new branch from main
         run: |
-          BRANCH_NAME="auto-pr-${{ github.run_id }}"
-          git checkout -b $BRANCH_NAME
+          git checkout -b auto-pr-${{ github.run_id }}
           git commit --allow-empty -m "Automated PR commit"
-          git push origin $BRANCH_NAME
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          git push origin auto-pr-${{ github.run_id }}
 
-      - name: Create Pull Request via GitHub CLI
+      - name: Create Pull Request via CLI
         run: |
           gh pr create \
             --base main \
-            --head ${{ env.BRANCH_NAME }} \
+            --head auto-pr-${{ github.run_id }} \
             --title "Automated Pull Request" \
-            --body "This PR was automatically created using GitHub Actions and a PAT."
+            --body "This PR was automatically created using GitHub CLI and PAT."
