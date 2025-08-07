@@ -1,35 +1,34 @@
-name: Auto Pull Request Workflow
+name: Auto Pull Request
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
+    env:
+      BRANCH_NAME: auto-pr-${{ github.run_id }}
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Configure Git
+      - name: Debug: Zeige Branch-Name
+        run: echo "BRANCH_NAME=${BRANCH_NAME}"
+
+      - name: Neues Branch erstellen
         run: |
-          git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git checkout -b $BRANCH_NAME
+          git commit --allow-empty -m "Trigger PR"
+          git push origin $BRANCH_NAME
 
-      - name: Create New Branch
-        run: |
-          BRANCH_NAME=auto-pr-$(date +%Y%m%d%H%M%S)
-          git checkout -b "$BRANCH_NAME"
-          git push origin "$BRANCH_NAME"
-
-      - name: Create Pull Request
+      - name: Pull Request erstellen
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.AUTO_FIX_TOKEN }}
-          commit-message: "Auto PR: Änderungen automatisch erstellt"
-          title: "Auto PR: Änderungen automatisch erstellt"
-          body: "Dieser Pull Request wurde automatisch vom Auto-Fix Workflow erstellt."
-          branch: ${{ github.ref_name }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           base: main
+          head: ${{ env.BRANCH_NAME }}
+          title: "Automated Pull Request"
+          body: "This PR was automatically created using GitHub CLI and PAT."
