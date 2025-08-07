@@ -1,5 +1,3 @@
-name: Auto Pull Request
-
 on:
   workflow_dispatch:
 
@@ -7,13 +5,10 @@ jobs:
   create-pull-request:
     runs-on: ubuntu-latest
     env:
-      BRANCH_NAME: auto-pr-${{ github.run_id }}
+      BRANCH_NAME: auto-pr-$(date +%s)
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-
-      - name: Debug - Zeige Branch-Name
-        run: echo "BRANCH_NAME=${BRANCH_NAME}"
 
       - name: Neues Branch erstellen
         run: |
@@ -28,7 +23,8 @@ jobs:
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           base: main
-          title: Automated Pull Request
+          branch: ${{ env.BRANCH_NAME }}
+          title: Auto Pull Request
           body: |
-            This PR was automatically created using GitHub CLI and PAT.
+            This PR was automatically created using workflow_dispatch.
           draft: false
