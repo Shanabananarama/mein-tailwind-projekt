@@ -12,10 +12,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Debug: Zeige Branch-Name
+      - name: "Debug: Zeige Branch-Name"
         run: echo "BRANCH_NAME=${BRANCH_NAME}"
 
-      - name: Neues Branch erstellen
+      - name: "Neues Branch erstellen"
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
@@ -23,11 +23,12 @@ jobs:
           git commit --allow-empty -m "Trigger PR"
           git push origin $BRANCH_NAME
 
-      - name: Pull Request erstellen
+      - name: "Pull Request erstellen"
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           base: main
-          head: ${{ env.BRANCH_NAME }}
+          branch: ${{ env.BRANCH_NAME }}
           title: Automated Pull Request
-          body: This PR was automatically created using GitHub CLI and PAT.
+          body: |
+            This PR was automatically created using GitHub CLI and PAT.FINALLFIN
