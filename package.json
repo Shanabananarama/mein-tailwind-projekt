@@ -2,17 +2,17 @@
   "name": "mein-tailwind-projekt",
   "version": "1.0.0",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "test": "echo \"No tests defined\" && exit 0"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "dependencies": {
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "tailwindcss": "^3.0.0"
+    "@vitejs/plugin-react": "^4.7.0",
+    "vite": "^5.4.19"
   }
 }
