@@ -1,37 +1,21 @@
-name: 🚀 Build Test
+name: Test Build
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # -----------------------------
-      # 1️⃣ Repository auschecken
-      # -----------------------------
-      - name: 📂 Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      # -----------------------------
-      # 2️⃣ Node.js einrichten
-      # -----------------------------
-      - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: 18
 
-      # -----------------------------
-      # 3️⃣ Abhängigkeiten installieren
-      # -----------------------------
-      - name: 📦 Install Dependencies
-        run: npm install
+      - name: Install dependencies
+        run: npm ci
 
-      # -----------------------------
-      # 4️⃣ Projekt builden (KORREKT)
-      # -----------------------------
-      - name: 🏗 Build Project
+      - name: Build Project
         run: npm run build
