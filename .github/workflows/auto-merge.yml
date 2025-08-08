@@ -3,28 +3,22 @@ name: Auto Merge
 on:
   pull_request:
     types:
+      - labeled
       - opened
-      - reopened
       - synchronize
-      - ready_for_review
-
-permissions:
-  contents: write
-  pull-requests: write
+      - reopened
 
 jobs:
   auto-approve-and-merge:
+    if: contains(github.event.pull_request.labels.*.name, 'automerge')
     runs-on: ubuntu-latest
-    if: github.actor == 'github-actions[bot]'
     steps:
-      - name: Auto approve PR
+      - name: Auto approve
         uses: hmarr/auto-approve-action@v3
         with:
-          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Enable auto-merge
-        uses: peter-evans/enable-pull-request-automerge@v2
-        with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          pull-request-number: ${{ github.event.pull_request.number }}
-          merge-method: squash
+      - name: Auto merge
+        uses: pascalgn/automerge-action@v0.15.6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
