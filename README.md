@@ -1,3 +1,4 @@
+Test für Auto-Approve #1
 # mein-tailwind-projekt
 
-tradong card website
+trading card website
