@@ -1,4 +1,4 @@
 # mein-tailwind-projekt
 
 tradong card website
-<!-- Test Auto PR -->
+echo "<!-- test: auto-approve check -->" >> README.md
