@@ -1,0 +1,11 @@
+name: create-pull-request
+
+on:
+  pull_request:
+
+jobs:
+  ok:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report success for required context
+        run: echo "create-pull-request OK"
