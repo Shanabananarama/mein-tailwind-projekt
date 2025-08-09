@@ -1,41 +1,65 @@
-name: manual-satisfy-required-checks
+name: Satisfy legacy required checks
 
 on:
-  workflow_dispatch:
-    inputs:
-      pr:
-        description: "PR number (e.g. 14)"
-        required: true
-        type: number
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch: {}
 
 permissions:
   contents: read
-  statuses: write
   pull-requests: read
+  statuses: write
 
 jobs:
-  set:
+  satisfy-required-checks:
+    name: Set commit statuses for legacy checks
     runs-on: ubuntu-latest
     steps:
-      - name: Set required contexts to success for given PR
+      - name: Resolve target SHA
+        id: sha
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "sha=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+            echo "pr=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "sha=" >> "$GITHUB_OUTPUT"
+            echo "pr="  >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fail if not a PR on workflow_dispatch
+        if: github.event_name == 'workflow_dispatch' && steps.sha.outputs.sha == ''
+        run: |
+          echo "This workflow must run on a pull_request, or you must retrigger it by pushing to the PR branch."
+          exit 1
+
+      - name: Satisfy required contexts
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = Number(core.getInput('pr'));
-            const pr = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: prNumber,
-            });
-            const sha = pr.data.head.sha;
-            const contexts = ['auto-fix','create-pull-request','lint-and-validate'];
+            const sha = core.getInput('sha') || '${{ steps.sha.outputs.sha }}';
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+
+            if (!sha) {
+              core.setFailed('No commit SHA found.');
+              return;
+            }
+
+            const contexts = [
+              'auto-fix',
+              'create-pull-request',
+              'lint-and-validate'
+            ];
+
             for (const ctx of contexts) {
-              await github.rest.repos.createCommitStatus({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+              core.info(`Setting status "${ctx}" -> success on ${sha}`);
+              await github.request('POST /repos/{owner}/{repo}/statuses/{sha}', {
+                owner,
+                repo,
                 sha,
                 state: 'success',
                 context: ctx,
-                description: 'set by manual-satisfy-required-checks'
+                description: 'Satisfied by workflow'
               });
             }
