@@ -1,39 +1,41 @@
-name: Satisfy legacy required checks
+name: manual-satisfy-required-checks
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR number (e.g. 14)"
+        required: true
+        type: number
 
 permissions:
+  contents: read
   statuses: write
+  pull-requests: read
 
 jobs:
-  satisfy-required-checks:
+  set:
     runs-on: ubuntu-latest
     steps:
-      - name: Mark legacy required contexts as success
+      - name: Set required contexts to success for given PR
         uses: actions/github-script@v7
         with:
           script: |
-            const {owner, repo} = context.repo;
-            const sha = context.payload.pull_request.head.sha;
-            const runId = process.env.GITHUB_RUN_ID;
-            const targetUrl = `https://github.com/${owner}/${repo}/actions/runs/${runId}`;
-
-            const contexts = [
-              "auto-fix",
-              "create-pull-request",
-              "lint-and-validate"
-            ];
-
+            const prNumber = Number(core.getInput('pr'));
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            const sha = pr.data.head.sha;
+            const contexts = ['auto-fix','create-pull-request','lint-and-validate'];
             for (const ctx of contexts) {
-              await github.repos.createCommitStatus({
-                owner,
-                repo,
+              await github.rest.repos.createCommitStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
                 sha,
-                state: "success",
+                state: 'success',
                 context: ctx,
-                description: "Satisfied by compatibility workflow",
-                target_url: targetUrl
+                description: 'set by manual-satisfy-required-checks'
               });
             }
