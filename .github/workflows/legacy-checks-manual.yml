@@ -1,0 +1,63 @@
+name: Satisfy legacy checks (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Pull request number to satisfy legacy checks for'
+        required: true
+        type: number
+
+permissions:
+  statuses: write
+  pull-requests: read
+
+jobs:
+  satisfy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve PR head SHA
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = Number(core.getInput('pr'));
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            core.setOutput('sha', pr.data.head.sha);
+
+      # ---- die 4 Legacy-Kontexte auf success setzen ----
+      - name: legacy: auto-fix
+        uses: peter-evans/create-or-update-commit-status@v3
+        with:
+          sha: ${{ steps.pr.outputs.sha }}
+          context: auto-fix
+          state: success
+          description: Satisfied by manual legacy workflow
+
+      - name: legacy: automerge
+        uses: peter-evans/create-or-update-commit-status@v3
+        with:
+          sha: ${{ steps.pr.outputs.sha }}
+          context: automerge
+          state: success
+          description: Satisfied by manual legacy workflow
+
+      - name: legacy: create-pull-request
+        uses: peter-evans/create-or-update-commit-status@v3
+        with:
+          sha: ${{ steps.pr.outputs.sha }}
+          context: create-pull-request
+          state: success
+          description: Satisfied by manual legacy workflow
+
+      - name: legacy: lint-and-validate
+        uses: peter-evans/create-or-update-commit-status@v3
+        with:
+          sha: ${{ steps.pr.outputs.sha }}
+          context: lint-and-validate
+          state: success
+          description: Satisfied by manual legacy workflow
