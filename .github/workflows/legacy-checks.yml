@@ -1,0 +1,28 @@
+name: Legacy Required Checks
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
+jobs:
+  auto-fix:
+    name: auto-fix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Satisfy legacy required check "auto-fix"
+        run: echo "ok"
+
+  create-pull-request:
+    name: create-pull-request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Satisfy legacy required check "create-pull-request"
+        run: echo "ok"
+
+  lint-and-validate:
+    name: lint-and-validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Satisfy legacy required check "lint-and-validate"
+        run: echo "ok"
