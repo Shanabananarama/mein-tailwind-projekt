@@ -1,0 +1,19 @@
+name: Auto Approve
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, ready_for_review]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  approve:
+    if: contains(toJson(github.event.pull_request.labels), 'auto-merge') || startsWith(github.head_ref || '', 'auto/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-approve
+        uses: hmarr/auto-approve-action@v4
+        with:
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
