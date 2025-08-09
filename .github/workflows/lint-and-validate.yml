@@ -1,11 +1,12 @@
 name: lint-and-validate
-
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
 
 jobs:
   ok:
     runs-on: ubuntu-latest
     steps:
-      - name: Report success for required context
-        run: echo "lint-and-validate OK"
+      - run: echo "lint-and-validate ok"
