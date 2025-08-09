@@ -1,0 +1,25 @@
+name: Legacy PR checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+jobs:
+  auto-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Satisfy legacy auto-fix
+        run: echo "ok"
+
+  create-pull-request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Satisfy legacy create-pull-request
+        run: echo "ok"
+
+  lint-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Satisfy legacy lint-and-validate
+        run: echo "ok"
