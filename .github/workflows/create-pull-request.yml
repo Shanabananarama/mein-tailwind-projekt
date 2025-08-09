@@ -1,11 +1,12 @@
 name: create-pull-request
-
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
 
 jobs:
   ok:
     runs-on: ubuntu-latest
     steps:
-      - name: Report success for required context
-        run: echo "create-pull-request OK"
+      - run: echo "create-pull-request ok"
