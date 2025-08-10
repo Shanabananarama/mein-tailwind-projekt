@@ -1,14 +1,13 @@
 {
   "name": "mein-tailwind-projekt",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "private": true,
-  "description": "Trading cards website – smoke test for auto-merge",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "echo \"ok\""
+    "test": "echo \"No tests\" && exit 0"
   },
   "dependencies": {
     "react": "^18.2.0",
