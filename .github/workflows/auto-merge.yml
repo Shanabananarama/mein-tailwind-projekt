@@ -1,41 +1,34 @@
-name: Auto Merge / auto-approve-and-merge
+name: Auto Merge PRs
 
 on:
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
-      - labeled
-      - unlabeled
-    branches:
-      - main
+  pull_request_target:
+    types: [opened, reopened, labeled, synchronize, ready_for_review]
 
 permissions:
   contents: write
   pull-requests: write
+  statuses: read
 
 jobs:
-  enable-builtin-auto-merge:
-    name: Enable built-in Auto‑Merge (squash)
-    # läuft nur bei offenen, NICHT‑Draft PRs mit Label "auto-merge"
+  enable-auto-merge:
+    # nur für PRs gegen main und mit dem Label 'auto-merge'
     if: >
-      github.event.pull_request.state == 'open' &&
-      github.event.pull_request.draft == false &&
-      contains(join(github.event.pull_request.labels.*.name, ','), 'auto-merge')
+      github.event.pull_request.base.ref == 'main' &&
+      (
+        (github.event.action == 'labeled' && github.event.label.name == 'auto-merge') ||
+        contains(join(github.event.pull_request.labels.*.name, ','), 'auto-merge')
+      )
     runs-on: ubuntu-latest
     steps:
-      - name: Enable Auto‑Merge (squash)
-        uses: peter-evans/enable-pull-request-automerge@v3
+      # Optional: automatisch approven (falls Approval nötig wäre)
+      - name: Auto-approve
+        uses: peter-evans/auto-approve@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Built-in Auto-Merge aktivieren (Merge-Methode: squash)
+      - name: Enable built-in Auto-Merge (squash)
+        uses: peter-evans/enable-pull-request-automerge@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          pull-request-number: ${{ github.event.pull_request.number }}
           merge-method: squash
-
-      # Optional: Falls du irgendwann wieder Reviews erzwingst, kannst du hier
-      # automatisch approve′n (bei Bedarf aktivieren).
-      # - name: Auto-approve (optional)
-      #   uses: hmarr/auto-approve-action@v3
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
