@@ -1,1 +1,1 @@
-Auto-merge proof – {{heute}}
+Proof: {{heute}}
