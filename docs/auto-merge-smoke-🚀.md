@@ -1,0 +1,1 @@
+Auto-merge smoke ✅ — {{heute}}
