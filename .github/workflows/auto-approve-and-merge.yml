@@ -2,30 +2,32 @@ name: Auto Approve & Auto-Merge
 
 on:
   pull_request:
-    # reagiert auf (re)open, neue Commits, Label-Änderungen, Review-ready
-    types: [opened, reopened, synchronize, ready_for_review, labeled]
-    branches: [main]
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
   approve-and-merge:
-    # Nur PRs nach main, kein Draft, Label muss 'auto-merge' enthalten
-    if: >-
-      github.event.pull_request.base.ref == 'main' &&
-      !github.event.pull_request.draft &&
-      contains(join(github.event.pull_request.labels.*.name, ','), 'auto-merge')
     runs-on: ubuntu-latest
-    steps:
-      - name: Approve PR
-        uses: peter-evans/auto-approve@v4
-        with:
-          review-message: "Auto-approval for auto-merge."
+    if: github.actor == 'Shanabananarama' # nur du selbst
 
-      - name: Enable built-in Auto-Merge (squash)
-        uses: peter-evans/enable-pull-request-automerge@v2
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Auto approve PR
+        uses: hmarr/auto-approve-action@v3
         with:
-          merge-method: squash
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge
+        run: gh pr merge "$PR_URL" --auto --squash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
