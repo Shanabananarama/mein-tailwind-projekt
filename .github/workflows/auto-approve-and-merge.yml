@@ -1,0 +1,31 @@
+name: Auto Approve & Auto-Merge
+
+on:
+  pull_request:
+    # reagiert auf (re)open, neue Commits, Label-Änderungen, Review-ready
+    types: [opened, reopened, synchronize, ready_for_review, labeled]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  approve-and-merge:
+    # Nur PRs nach main, kein Draft, Label muss 'auto-merge' enthalten
+    if: >-
+      github.event.pull_request.base.ref == 'main' &&
+      !github.event.pull_request.draft &&
+      contains(join(github.event.pull_request.labels.*.name, ','), 'auto-merge')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approve PR
+        uses: peter-evans/auto-approve@v4
+        with:
+          review-message: "Auto-approval for auto-merge."
+
+      - name: Enable built-in Auto-Merge (squash)
+        uses: peter-evans/enable-pull-request-automerge@v2
+        with:
+          merge-method: squash
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
