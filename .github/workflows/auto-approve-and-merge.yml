@@ -1,4 +1,4 @@
-name: Auto Approve & Auto-Merge
+name: Auto Approve & Prepare Merge
 
 on:
   pull_request:
@@ -13,21 +13,22 @@ permissions:
   pull-requests: write
 
 jobs:
-  approve-and-merge:
+  approve-and-prepare:
     runs-on: ubuntu-latest
     if: github.actor == 'Shanabananarama' # nur du selbst
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Auto approve PR
+      - name: Approve Pull Request
         uses: hmarr/auto-approve-action@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Enable auto-merge
-        run: gh pr merge "$PR_URL" --auto --squash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
+      - name: Comment to indicate ready for merge
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: "Auto-Approve"
+          message: |
+            ✅ Alle Checks erfolgreich. 
+            Warte auf manuelle Freigabe von @Shanabananarama zum Merge.
