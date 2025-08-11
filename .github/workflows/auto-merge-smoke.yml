@@ -1,0 +1,38 @@
+name: Auto‑Merge Smoke
+
+on:
+  # Manuell startbar (Actions → Auto‑Merge Smoke → Run workflow)
+  workflow_dispatch:
+  # Täglich 06:15 UTC
+  schedule:
+    - cron: '15 6 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  smoke:
+    name: Create tiny docs change and open PR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create proof file
+        run: |
+          TS=$(date -u +'%Y-%m-%d_%H-%M-%SZ')
+          mkdir -p docs
+          echo "Auto‑merge smoke test — ${TS}" > "docs/auto-merge-proof-${TS}.md"
+
+      - name: Open PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: "chore/auto-merge-smoke-${{ github.run_id }}"
+          delete-branch: true
+          commit-message: "chore(smoke): auto-merge proof"
+          title: "Create auto-merge-proof (${{ github.run_id }})"
+          body: |
+            This is an automated smoke PR to prove Auto‑Merge is working.
+            It adds a tiny file under `docs/` and relies on CI + Auto‑Merge.
+          labels: |
+            smoke
