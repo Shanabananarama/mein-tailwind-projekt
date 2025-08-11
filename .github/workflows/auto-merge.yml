@@ -1,4 +1,4 @@
-name: Auto Merge
+name: Auto Merge / auto-approve-and-merge
 
 on:
   pull_request:
@@ -7,24 +7,35 @@ on:
       - reopened
       - synchronize
       - ready_for_review
+      - labeled
+      - unlabeled
+    branches:
+      - main
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  auto-approve-and-merge:
+  enable-builtin-auto-merge:
+    name: Enable built-in Auto‑Merge (squash)
+    # läuft nur bei offenen, NICHT‑Draft PRs mit Label "auto-merge"
+    if: >
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.draft == false &&
+      contains(join(github.event.pull_request.labels.*.name, ','), 'auto-merge')
     runs-on: ubuntu-latest
-    if: github.actor == 'github-actions[bot]'
     steps:
-      - name: Auto approve PR
-        uses: hmarr/auto-approve-action@v3
+      - name: Enable Auto‑Merge (squash)
+        uses: peter-evans/enable-pull-request-automerge@v3
         with:
-          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
-      - name: Enable auto-merge
-        uses: peter-evans/enable-pull-request-automerge@v2
-        with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           pull-request-number: ${{ github.event.pull_request.number }}
           merge-method: squash
+
+      # Optional: Falls du irgendwann wieder Reviews erzwingst, kannst du hier
+      # automatisch approve′n (bei Bedarf aktivieren).
+      # - name: Auto-approve (optional)
+      #   uses: hmarr/auto-approve-action@v3
+      #   with:
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
