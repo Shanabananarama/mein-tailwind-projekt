@@ -1,0 +1,54 @@
+name: Merge Gate
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  gate:
+    # Nur für PRs gegen main
+    if: ${{ github.event.pull_request.base.ref == 'main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prüfe Label und Owner-Approval
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const core = require('@actions/core');
+            const requiredLabel = 'ready-to-merge';
+
+            const pr = context.payload.pull_request;
+
+            // 1) Label prüfen
+            const hasLabel = (pr.labels || []).some(l => l.name === requiredLabel);
+            if (!hasLabel) {
+              core.setFailed(`Fehlendes Label "${requiredLabel}". Bitte setzen und erneut versuchen.`);
+              return;
+            }
+
+            // 2) Owner-Approval prüfen
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+
+            // Letzte gültige Entscheidung des Owners suchen
+            let ownerLatestDecision = null;
+            for (const r of reviews) {
+              if (r.user && r.user.login === context.repo.owner) {
+                ownerLatestDecision = r.state; // e.g. APPROVED / CHANGES_REQUESTED / COMMENTED
+              }
+            }
+
+            if (ownerLatestDecision !== 'APPROVED') {
+              core.setFailed(`Owner-Approval fehlt. ${context.repo.owner} muss den PR approven.`);
+              return;
+            }
+
+            core.notice('Merge Gate OK: Label und Owner-Approval vorhanden.');
