@@ -1,0 +1,25 @@
+name: Auto Approve PRs
+
+on:
+  pull_request_target:
+    types: [opened, ready_for_review, labeled, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  auto-approve:
+    if: >
+      github.event.pull_request.base.ref == 'main' &&
+      (
+        contains(join(github.event.pull_request.labels.*.name, ','), 'auto-merge') ||
+        github.event.action == 'labeled' && github.event.label.name == 'auto-merge'
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-approve
+        uses: peter-evans/auto-approve@v4
+        with:
+          review-message: "Auto-approval for auto-merge."
+          pull-request-number: ${{ github.event.pull_request.number }}
