@@ -1,34 +1,24 @@
-name: Auto Merge PRs
+name: Auto Merge Pull Requests
 
 on:
-  pull_request_target:
-    types: [opened, reopened, labeled, synchronize, ready_for_review]
+  pull_request:
+    types: [labeled, opened, synchronize]
 
 permissions:
   contents: write
   pull-requests: write
-  statuses: read
 
 jobs:
-  enable-auto-merge:
-    # nur für PRs gegen main und mit dem Label 'auto-merge'
-    if: >
-      github.event.pull_request.base.ref == 'main' &&
-      (
-        (github.event.action == 'labeled' && github.event.label.name == 'auto-merge') ||
-        contains(join(github.event.pull_request.labels.*.name, ','), 'auto-merge')
-      )
+  automerge:
     runs-on: ubuntu-latest
     steps:
-      # Optional: automatisch approven (falls Approval nötig wäre)
-      - name: Auto-approve
-        uses: peter-evans/auto-approve@v3
+      - name: Auto merge PR when ready
+        uses: pascalgn/automerge-action@v0.16.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      # Built-in Auto-Merge aktivieren (Merge-Methode: squash)
-      - name: Enable built-in Auto-Merge (squash)
-        uses: peter-evans/enable-pull-request-automerge@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          merge-method: squash
+          MERGE_METHOD: "squash"
+          UPDATE_METHOD: "rebase"
+          MERGE_LABELS: "automerge"
+          UPDATE_LABELS: "automerge"
+          MERGE_REQUIRED_APPROVALS: 0
