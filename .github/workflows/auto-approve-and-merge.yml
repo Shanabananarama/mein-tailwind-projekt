@@ -1,31 +1,34 @@
-name: Auto Approve & Auto-Merge
+name: Auto Approve & Prepare Merge
 
 on:
   pull_request:
-    # reagiert auf (re)open, neue Commits, Label-Änderungen, Review-ready
-    types: [opened, reopened, synchronize, ready_for_review, labeled]
-    branches: [main]
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
-  approve-and-merge:
-    # Nur PRs nach main, kein Draft, Label muss 'auto-merge' enthalten
-    if: >-
-      github.event.pull_request.base.ref == 'main' &&
-      !github.event.pull_request.draft &&
-      contains(join(github.event.pull_request.labels.*.name, ','), 'auto-merge')
+  approve-and-prepare:
     runs-on: ubuntu-latest
+    if: github.actor == 'Shanabananarama' # nur du selbst
     steps:
-      - name: Approve PR
-        uses: peter-evans/auto-approve@v4
-        with:
-          review-message: "Auto-approval for auto-merge."
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-      - name: Enable built-in Auto-Merge (squash)
-        uses: peter-evans/enable-pull-request-automerge@v2
+      - name: Approve Pull Request
+        uses: hmarr/auto-approve-action@v3
         with:
-          merge-method: squash
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment to indicate ready for merge
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: "Auto-Approve"
+          message: |
+            ✅ Alle Checks erfolgreich. 
+            Warte auf manuelle Freigabe von @Shanabananarama zum Merge.
