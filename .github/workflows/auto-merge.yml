@@ -2,7 +2,11 @@ name: Auto Merge Pull Requests
 
 on:
   pull_request:
-    types: [opened, synchronize, labeled, ready_for_review]
+    types:
+      - opened
+      - labeled
+      - synchronize
+      - ready_for_review
 
 permissions:
   contents: write
@@ -10,12 +14,12 @@ permissions:
 
 jobs:
   auto-merge:
-    if: ${{ !github.event.pull_request.draft }}  # nur wenn kein Draft
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Enable auto-merge (squash)
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
           pull-request-number: ${{ github.event.pull_request.number }}
-          merge-method: squash
           token: ${{ secrets.GITHUB_TOKEN }}
+          merge-method: squash
