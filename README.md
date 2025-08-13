@@ -2,4 +2,4 @@
 
 tradong card website
 chore: auto-merge test
-✅ Auto-Merge Test
+✅ Auto–Merge Test
