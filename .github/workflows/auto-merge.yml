@@ -1,31 +1,21 @@
-name: auto-merge
+name: Auto Merge (squash)
 
 on:
   pull_request_target:
     types: [labeled, reopened, synchronize, ready_for_review]
 
 permissions:
-  contents: write
   pull-requests: write
+  contents: write
 
 jobs:
   enable_auto_merge:
-    name: Enable GitHub Auto‑Merge (squash)
-    # Nur wenn das PR NICHT Draft ist und das Label 'automerge' gesetzt ist
-    if: >-
-      github.event.pull_request.draft == false &&
-      contains(github.event.pull_request.labels.*.name, 'automerge')
+    if: contains(toJson(github.event.pull_request.labels.*.name), 'automerge') && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
-      - name: Enable auto-merge (squash)
+      - name: Enable GitHub AutoMerge (squash)
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           pull-request-number: ${{ github.event.pull_request.number }}
           merge-method: squash
-      - name: Comment
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: "✅ Auto-merge aktiviert. Merge erfolgt automatisch sobald **build**, **lint** und **gate** grün sind."
