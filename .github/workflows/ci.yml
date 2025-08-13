@@ -1,29 +1,27 @@
 name: CI Test Build
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Repository herunterladen
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: 🛠 Node.js einrichten
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 20
+          cache: 'npm'
 
-      - name: 📦 Abhängigkeiten installieren
-        run: npm install
+      - name: Install dependencies
+        run: |
+          npm cache clean --force
+          npm install --prefer-offline --no-audit --progress=false
 
-      - name: 🏗 Projekt bauen
+      - name: Run build
         run: npm run build
-
-      - name: ✅ Tests ausführen
-        run: npm test || echo "⚠️ Keine Tests vorhanden – wird übersprungen"
