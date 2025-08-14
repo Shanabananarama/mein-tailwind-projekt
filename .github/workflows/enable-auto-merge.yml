@@ -1,4 +1,4 @@
-name: auto-merge
+name: enable-auto-merge
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  enable_auto_merge:
+  enable:
     # läuft nur, wenn Label 'auto-merge' existiert UND der PR kein Draft ist
     if: >
       contains(toJson(github.event.pull_request.labels.*.name), 'auto-merge')
