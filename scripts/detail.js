@@ -1,49 +1,54 @@
-// ==============================
-// detail.js - mit Chart Import
-// ==============================
+// scripts/detail.js
+import { abs } from './lib/base.js';
 
-// Chart.js importieren (Chart wird hierdurch global verfügbar)
-import Chart from "chart.js/auto";
-
-// Beispiel-Daten für das Chart (bitte anpassen, wenn du eigene Daten nutzt)
-const ctx = document.getElementById("myChart");
-
-if (ctx) {
-  new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
-      datasets: [{
-        label: "# of Votes",
-        data: [12, 19, 3, 5, 2, 3],
-        backgroundColor: [
-          "rgba(255, 99, 132, 0.2)",
-          "rgba(54, 162, 235, 0.2)",
-          "rgba(255, 206, 86, 0.2)",
-          "rgba(75, 192, 192, 0.2)",
-          "rgba(153, 102, 255, 0.2)",
-          "rgba(255, 159, 64, 0.2)"
-        ],
-        borderColor: [
-          "rgba(255, 99, 132, 1)",
-          "rgba(54, 162, 235, 1)",
-          "rgba(255, 206, 86, 1)",
-          "rgba(75, 192, 192, 1)",
-          "rgba(153, 102, 255, 1)",
-          "rgba(255, 159, 64, 1)"
-        ],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    }
-  });
-} else {
-  console.warn("Kein Canvas-Element mit ID 'myChart' gefunden.");
+function getId() {
+  const p = new URLSearchParams(location.search);
+  return p.get('id');
 }
+
+async function loadCard(id) {
+  const res = await fetch(abs('cards.json'), { cache: 'no-store' });
+  if (!res.ok) throw new Error(`cards.json fetch failed: ${res.status}`);
+  const list = await res.json();
+  return list.find(c => String(c.id) === String(id));
+}
+
+function render(card) {
+  const root = document.getElementById('app');
+  if (!root) return;
+  root.innerHTML = '';
+
+  const img = document.createElement('img');
+  img.src = abs(`images/${card.image ?? 'card-back.png'}`);
+  img.alt = card.name ?? 'Card';
+  img.className = 'max-w-sm rounded shadow';
+
+  const title = document.createElement('h1');
+  title.className = 'text-2xl font-bold mt-4';
+  title.textContent = card.name ?? 'Unbenannt';
+
+  const back = document.createElement('a');
+  back.href = abs('index.html');
+  back.className = 'text-blue-600 underline mt-4 inline-block';
+  back.textContent = 'Zurück';
+
+  root.appendChild(img);
+  root.appendChild(title);
+  root.appendChild(back);
+}
+
+async function start() {
+  const id = getId();
+  document.getElementById('status')?.replaceChildren('Lade Karte…');
+  try {
+    const card = await loadCard(id);
+    if (!card) throw new Error('Karte nicht gefunden');
+    render(card);
+    document.getElementById('status')?.replaceChildren('');
+  } catch (e) {
+    console.error(e);
+    document.getElementById('status')?.replaceChildren('Fehler beim Laden.');
+  }
+}
+
+start();
