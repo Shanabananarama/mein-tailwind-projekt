@@ -1,13 +1,15 @@
-name: Deploy GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
-  contents: read      # nötig, um den Code zu lesen
-  pages: write        # nötig, um auf Pages zu deployen
-  id-token: write     # OIDC für actions/deploy-pages
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: "pages"
@@ -15,9 +17,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build site
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,27 +34,18 @@ jobs:
       - name: Build
         run: npm run build
 
-      # 👉 wichtig für SPA-Routing: 404.html = index.html
-      - name: SPA fallback (copy index -> 404)
-        run: |
-          if [ -f dist/index.html ]; then
-            cp dist/index.html dist/404.html
-          fi
-
-      - name: Upload artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # 👉 falls dein Buildordner anders heißt (z.B. build/ oder out/), hier anpassen
           path: dist
 
   deploy:
-    name: Deploy to Pages
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
