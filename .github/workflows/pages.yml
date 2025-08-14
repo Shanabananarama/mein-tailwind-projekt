@@ -2,8 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]          # <- automatisch bei jedem Push auf main
-  workflow_dispatch:             # <- bleibt zusätzlich für manuelles Auslösen
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,36 +11,65 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  lint:
+    name: 🧹 Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Use Node 20
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-
       - name: Install
         run: npm ci
+      - name: Run lint
+        run: npm run lint
 
+  test:
+    name: ✅ Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Run unit tests
+        run: npm test
+
+  build:
+    name: 🏗️ Build
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install
+        run: npm ci
       - name: Build
-        env:
-          VITE_BASE: /mein-tailwind-projekt/
         run: npm run build
-
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
   deploy:
+    name: 🚀 Deploy
     needs: build
     runs-on: ubuntu-latest
     environment:
