@@ -1,21 +1,26 @@
-name: enable_auto_merge
+name: enable-auto-merge
 
 on:
   pull_request:
-    types: [labeled, reopened, synchronize, ready_for_review]
+    types: [opened, labeled, reopened, synchronize, ready_for_review]
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  enable:
-    if: >
-      contains(toJson(github.event.pull_request.labels.*.name), 'auto-merge')
-      && github.event.pull_request.draft == false
+  enable_auto_merge:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Enable GitHub AutoMerge (squash)
+      # Nur Info: wenn Draft, überspringen wir das Aktivieren – aber der Job läuft durch,
+      # damit der Required-Check NIE hängen bleibt.
+      - name: Skip on draft PR
+        if: ${{ github.event.pull_request.draft }}
+        run: echo "Draft PR – skipping auto-merge enabling, job remains successful."
+
+      - name: Enable GitHub Auto‑Merge (squash)
+        if: ${{ !github.event.pull_request.draft }}
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
