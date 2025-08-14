@@ -1,0 +1,7 @@
+# Build- und Tool-Ordner ignorieren
+dist/
+node_modules/
+build/
+out/
+.vite/
+coverage/
