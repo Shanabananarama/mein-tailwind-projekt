@@ -1,7 +1,8 @@
-name: Enable Auto Merge
+name: enable-auto-merge
 
 on:
-  workflow_dispatch:
+  pull_request:
+    types: [labeled, reopened, synchronize, ready_for_review]
 
 permissions:
   contents: write
@@ -9,6 +10,10 @@ permissions:
 
 jobs:
   enable:
+    # läuft nur, wenn Label 'auto-merge' existiert UND der PR kein Draft ist
+    if: >
+      contains(toJson(github.event.pull_request.labels.*.name), 'auto-merge')
+      && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Enable GitHub AutoMerge (squash)
