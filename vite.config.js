@@ -1,9 +1,8 @@
-import { defineConfig } from "vite";
+import { defineConfig } from 'vite'
 
 export default defineConfig({
-  server: {
-    watch: {
-      usePolling: true,
-    },
-  },
-});
+  base: '/mein-tailwind-projekt/', // wichtig für GitHub Pages
+  build: {
+    outDir: 'dist'
+  }
+})
