@@ -2,9 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: [ main ]          # <- automatisch bei jedem Push auf main
+  workflow_dispatch:             # <- bleibt zusätzlich für manuelles Auslösen
 
 permissions:
   contents: read
@@ -22,7 +21,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Use Node 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -32,6 +31,8 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          VITE_BASE: /mein-tailwind-projekt/
         run: npm run build
 
       - name: Upload Pages artifact
