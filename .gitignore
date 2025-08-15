@@ -1,5 +1,7 @@
-# existing ignores … (lass stehen)
-
-# --- force-include for API payload results ---
+# --- allow API artifacts even with broad ignores ---
+!openapi
 !openapi/**
+!mocks
 !mocks/**
+!.gitignore
+!.gitattributes
