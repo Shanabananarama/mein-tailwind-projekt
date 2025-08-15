@@ -1,83 +1,39 @@
-name: Task Runner v2 (Dropdown → PR + Auto‑Merge)
+name: Task Runner v2 (Dropdown → PR + Auto-Merge)
 
 on:
   workflow_dispatch:
     inputs:
-      task:
-        description: "Payload auswählen"
+      payload:
+        description: 'Payload auswählen'
         required: true
+        default: 'a2'
         type: choice
-        options: [a2, a3, a4]
-      branch:
-        description: "Branch-Name für den PR"
-        required: true
-        default: "task/auto"
-
-permissions:
-  contents: write
-  pull-requests: write
+        options:
+          - a2
+          - a3
+          - a4
+          - task/auto
 
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (full history)
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
+          node-version: '20'
 
-      - name: Payload prüfen
-        id: check
+      - name: Copy payload
         run: |
-          set -euo pipefail
-          test -f "payloads/${{ inputs.task }}.json"
-          echo "payload=$(tr -d '\n' < payloads/${{ inputs.task }}.json)" >> "$GITHUB_OUTPUT"
+          cp payloads/${{ github.event.inputs.payload }}.json payload.json
 
-      - name: jq installieren
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Dateien aus Payload schreiben
+      - name: Commit changes
         run: |
-          set -euo pipefail
-          JSON='${{ steps.check.outputs.payload }}'
-          echo "$JSON" | jq -c '.[]' | while read -r item; do
-            path=$(echo "$item" | jq -r '.path')
-            content=$(echo "$item" | jq -r '.content')
-            mkdir -p "$(dirname "$path")"
-            printf "%b" "$content" > "$path"
-            echo "Wrote $path"
-          done
-
-      - name: Debug – Git Status & Verzeichnisbäume
-        run: |
-          echo "===== git status ====="
-          git status --porcelain=v1
-          echo "===== tree: openapi ====="
-          ls -la openapi || true
-          echo "===== tree: mocks ====="
-          ls -la mocks || true
-
-      - name: Create Pull Request (staged nur gewünschte Pfade)
-        id: cpr
-        uses: peter-evans/create-pull-request@v7
-        with:
-          # WICHTIG: Neue/ungepushte Dateien explizit aufnehmen (siehe Doku 'add-paths')
-          # refs: https://github.com/peter-evans/create-pull-request
-          add-paths: |
-            openapi/**
-            mocks/**
-            README_A2.md
-          branch: ${{ inputs.branch }}
-          delete-branch: true
-          title: "Task: ${{ inputs.task }} (automated)"
-          body: "Automated by Task Runner v2 using payloads/${{ inputs.task }}.json"
-          commit-message: "chore(task): apply payload ${{ inputs.task }}"
-          signoff: true
-
-      - name: Enable Auto‑Merge (squash)
-        if: steps.cpr.outputs.pull-request-number != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh pr merge ${{ steps.cpr.outputs['pull-request-number'] }} \
-            --repo "$GITHUB_REPOSITORY" --auto --squash
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore(task): apply payload ${{ github.event.inputs.payload }}" || echo "No changes"
+          git push
