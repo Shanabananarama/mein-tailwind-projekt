@@ -1,14 +1,7 @@
 name: gate
-
-on:
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:
-
+on: pull_request
 jobs:
   gate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Gate (noop)
-        run: echo "✅ gate passed"
+      - run: echo ok
