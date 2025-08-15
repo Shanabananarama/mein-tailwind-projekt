@@ -1,14 +1,7 @@
 name: enable_auto_merge
-
-on:
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:
-
+on: pull_request
 jobs:
   enable_auto_merge:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Enable Auto Merge (noop)
-        run: echo "✅ enable_auto_merge passed"
+      - run: echo ok
