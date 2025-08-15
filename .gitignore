@@ -1,2 +1,5 @@
-node_modules
-node_modules
+# existing ignores … (lass stehen)
+
+# --- force-include for API payload results ---
+!openapi/**
+!mocks/**
