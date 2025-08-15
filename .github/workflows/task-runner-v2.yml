@@ -1,16 +1,13 @@
-name: Task Runner v2 (Dropdown → PR)
+name: Task Runner v2 (Dropdown → PR + Auto‑Merge)
 
 on:
   workflow_dispatch:
     inputs:
       task:
-        description: "Welche vorbereitete Payload soll eingespielt werden?"
+        description: "Payload auswählen"
         required: true
         type: choice
-        options:
-          - a2
-          - a3
-          - a4
+        options: [a2, a3, a4]
       branch:
         description: "Branch-Name für den PR"
         required: true
@@ -26,21 +23,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Prüfen, ob Payload vorhanden ist
+      - name: Payload prüfen
         id: check
         run: |
           set -euo pipefail
-          if [ ! -f "payloads/${{ inputs.task }}.json" ]; then
-            echo "Payload payloads/${{ inputs.task }}.json fehlt." >&2
-            exit 1
-          fi
-          echo "payload=$(cat payloads/${{ inputs.task }}.json | tr -d '\n' )" >> $GITHUB_OUTPUT
+          test -f "payloads/${{ inputs.task }}.json"
+          echo "payload=$(tr -d '\n' < payloads/${{ inputs.task }}.json)" >> $GITHUB_OUTPUT
 
       - name: jq installieren
         run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Dateien aus Payload schreiben
-        shell: bash
         run: |
           set -euo pipefail
           JSON='${{ steps.check.outputs.payload }}'
@@ -53,6 +46,7 @@ jobs:
           done
 
       - name: Create Pull Request
+        id: cpr
         uses: peter-evans/create-pull-request@v6
         with:
           branch: ${{ inputs.branch }}
@@ -61,3 +55,11 @@ jobs:
           body: "Automated by Task Runner v2 using payloads/${{ inputs.task }}.json"
           commit-message: "chore(task): apply payload ${{ inputs.task }}"
           signoff: true
+
+      - name: Enable Auto‑Merge (squash)
+        if: steps.cpr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr merge ${{ steps.cpr.outputs['pull-request-number'] }} \
+            --repo "$GITHUB_REPOSITORY" --auto --squash
