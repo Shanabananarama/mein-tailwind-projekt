@@ -1,0 +1,10 @@
+[
+  {
+    "path": "sandbox/A2_OK.txt",
+    "content": "A2 payload executed.\\n"
+  },
+  {
+    "path": "README_A2.md",
+    "content": "# A2 – Test-Payload über Runner v2\\n\\nDieser PR wurde automatisch aus `payloads/a2.json` erzeugt.\\n"
+  }
+]
