@@ -1,0 +1,63 @@
+name: Task Runner v2 (Dropdown → PR)
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Welche vorbereitete Payload soll eingespielt werden?"
+        required: true
+        type: choice
+        options:
+          - a2
+          - a3
+          - a4
+      branch:
+        description: "Branch-Name für den PR"
+        required: true
+        default: "task/auto"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prüfen, ob Payload vorhanden ist
+        id: check
+        run: |
+          set -euo pipefail
+          if [ ! -f "payloads/${{ inputs.task }}.json" ]; then
+            echo "Payload payloads/${{ inputs.task }}.json fehlt." >&2
+            exit 1
+          fi
+          echo "payload=$(cat payloads/${{ inputs.task }}.json | tr -d '\n' )" >> $GITHUB_OUTPUT
+
+      - name: jq installieren
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Dateien aus Payload schreiben
+        shell: bash
+        run: |
+          set -euo pipefail
+          JSON='${{ steps.check.outputs.payload }}'
+          echo "$JSON" | jq -c '.[]' | while read -r item; do
+            path=$(echo "$item" | jq -r '.path')
+            content=$(echo "$item" | jq -r '.content')
+            mkdir -p "$(dirname "$path")"
+            printf "%b" "$content" > "$path"
+            echo "Wrote $path"
+          done
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ${{ inputs.branch }}
+          delete-branch: true
+          title: "Task: ${{ inputs.task }} (automated)"
+          body: "Automated by Task Runner v2 using payloads/${{ inputs.task }}.json"
+          commit-message: "chore(task): apply payload ${{ inputs.task }}"
+          signoff: true
