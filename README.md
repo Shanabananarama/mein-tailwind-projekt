@@ -1,5 +1,3 @@
-# mein-tailwind-projekt
+## Task A1 Bootstrap
 
-tradong card website
-chore: auto-merge test
-✅ Auto–Merge Test
+Initial API setup for Lovable integration.
