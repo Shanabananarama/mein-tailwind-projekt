@@ -1,4 +1,4 @@
-name: build-test
+name: gate
 
 on:
   pull_request:
@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-test:
+  gate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test (noop)
-        run: echo "✅ build-test passed"
+      - name: Gate (noop)
+        run: echo "✅ gate passed"
