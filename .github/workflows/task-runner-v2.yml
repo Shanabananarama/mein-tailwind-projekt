@@ -21,14 +21,17 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Payload prüfen
         id: check
         run: |
           set -euo pipefail
           test -f "payloads/${{ inputs.task }}.json"
-          echo "payload=$(tr -d '\n' < payloads/${{ inputs.task }}.json)" >> $GITHUB_OUTPUT
+          echo "payload=$(tr -d '\n' < payloads/${{ inputs.task }}.json)" >> "$GITHUB_OUTPUT"
 
       - name: jq installieren
         run: sudo apt-get update && sudo apt-get install -y jq
@@ -45,10 +48,25 @@ jobs:
             echo "Wrote $path"
           done
 
-      - name: Create Pull Request
+      - name: Debug – Git Status & Verzeichnisbäume
+        run: |
+          echo "===== git status ====="
+          git status --porcelain=v1
+          echo "===== tree: openapi ====="
+          ls -la openapi || true
+          echo "===== tree: mocks ====="
+          ls -la mocks || true
+
+      - name: Create Pull Request (staged nur gewünschte Pfade)
         id: cpr
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
+          # WICHTIG: Neue/ungepushte Dateien explizit aufnehmen (siehe Doku 'add-paths')
+          # refs: https://github.com/peter-evans/create-pull-request
+          add-paths: |
+            openapi/**
+            mocks/**
+            README_A2.md
           branch: ${{ inputs.branch }}
           delete-branch: true
           title: "Task: ${{ inputs.task }} (automated)"
