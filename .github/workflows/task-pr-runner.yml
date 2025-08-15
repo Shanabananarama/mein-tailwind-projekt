@@ -1,0 +1,65 @@
+name: Task PR Runner (Files → PR)
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_title:
+        description: "PR Titel"
+        required: true
+        default: "Task: Automated file drop"
+      branch:
+        description: "Branch-Name für PR"
+        required: true
+        default: "task/auto"
+      commit_message:
+        description: "Commit-Message"
+        required: true
+        default: "chore: automated file drop"
+      files_json:
+        description: >
+          JSON-Array [{ "path": "pfad/datei.ext", "content": "..." }, ...]
+          \n im Text erzeugt Zeilenumbrüche
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Write files from JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          JSON='${{ inputs.files_json }}'
+          echo "$JSON" | jq -c '.[]' | while read -r item; do
+            path=$(echo "$item" | jq -r '.path')
+            content=$(echo "$item" | jq -r '.content')
+            mkdir -p "$(dirname "$path")"
+            # \n im JSON werden zu echten Zeilenumbrüchen
+            printf "%b" "$content" > "$path"
+            echo "Wrote $path"
+          done
+
+      - name: Optional OpenAPI lint
+        if: ${{ contains(inputs.files_json, 'openapi/openapi.yaml') }}
+        run: |
+          npm i -g @redocly/cli
+          redocly lint openapi/openapi.yaml
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ${{ inputs.branch }}
+          delete-branch: true
+          title: ${{ inputs.pr_title }}
+          body: "Automated by Task PR Runner"
+          commit-message: ${{ inputs.commit_message }}
+          signoff: true
