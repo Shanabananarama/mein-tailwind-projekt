@@ -1,0 +1,336 @@
+name: Task A1 – Bootstrap (OpenAPI + Mocks)
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  a1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write A1 files (OpenAPI + Mocks + README)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p openapi mocks
+
+          cat > openapi/openapi.yaml <<'YAML'
+openapi: 3.1.0
+info:
+  title: TradingCards Read-Only API
+  version: 0.1.0
+  description: >
+    Read-only API für Lovable (nur GET). Basis für Sets, Cards, Prices (Snapshots).
+    Keine Auth, keine Writes, keine Live-Feeds.
+servers:
+  - url: https://staging.DEINE-DOMAIN.tld/api/v1
+    description: Staging
+  - url: http://localhost:3000/api/v1
+    description: Lokal (Dev)
+tags:
+  - name: Sets
+  - name: Cards
+  - name: Prices
+paths:
+  /sets:
+    get:
+      tags: [Sets]
+      summary: Liste aller Sets
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string, minLength: 1 }
+          description: Optionaler Suchbegriff (Set-Name)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Set"
+              examples:
+                beispiel:
+                  value:
+                    - { id: "set_1986_fleer_basketball", name: "Fleer Basketball 1986-87", release_date: "1986-08-01" }
+                    - { id: "set_2020_uefa_chrome", name: "Topps Chrome UEFA 2020/21", release_date: "2020-08-19" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /cards:
+    get:
+      tags: [Cards]
+      summary: Suche/Filter von Karten (paginierte Antwort)
+      parameters:
+        - in: query
+          name: setId
+          schema: { type: string }
+          description: Filter nach Set-ID
+        - in: query
+          name: q
+          schema: { type: string, minLength: 1 }
+          description: Volltext (Name/Player/Franchise/Number/Variant)
+        - in: query
+          name: rarity
+          schema: { type: string }
+          description: Rarität (z. B. Base, Parallel, Insert)
+        - in: query
+          name: variant
+          schema: { type: string }
+          description: Variant/Parallel (z. B. Refractor)
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+          description: Seite (1-basiert)
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 1, maximum: 100, default: 24 }
+          description: Items pro Seite
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedCards"
+              examples:
+                beispiel:
+                  value:
+                    page: 1
+                    pageSize: 24
+                    total: 2
+                    items:
+                      - { id: "card_jordan_rc", set_id: "set_1986_fleer_basketball", player: "Michael Jordan", franchise: "Chicago Bulls", number: "57", variant: null, rarity: "Base" }
+                      - { id: "card_messi_tc", set_id: "set_2020_uefa_chrome", player: "Lionel Messi", franchise: "FC Barcelona", number: "10", variant: "Refractor", rarity: "Parallel" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /cards/{id}:
+    get:
+      tags: [Cards]
+      summary: Kartendetail
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+              examples:
+                jordan:
+                  value:
+                    { id: "card_jordan_rc", set_id: "set_1986_fleer_basketball", player: "Michael Jordan", franchise: "Chicago Bulls", number: "57", variant: null, rarity: "Base" }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /prices/snapshot:
+    get:
+      tags: [Prices]
+      summary: Preis-Snapshots einer Karte (neueste zuerst)
+      parameters:
+        - in: query
+          name: cardId
+          required: true
+          schema: { type: string }
+          description: Karten-ID
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+          description: Anzahl Rückgaben (Standard 20, max 100)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Price"
+              examples:
+                beispiel:
+                  value:
+                    - { id: "px1", card_id: "card_jordan_rc", source: "ebay", currency: "USD", price: 8500, collected_at: "2024-12-15T10:00:00Z" }
+                    - { id: "px2", card_id: "card_jordan_rc", source: "ebay", currency: "USD", price: 8300, collected_at: "2024-12-01T10:00:00Z" }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  schemas:
+    Set:
+      type: object
+      additionalProperties: false
+      required: [id, name, release_date]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        release_date: { type: string, format: date }
+
+    Card:
+      type: object
+      additionalProperties: false
+      required: [id, set_id]
+      properties:
+        id: { type: string }
+        set_id: { type: string, description: "FK -> Set.id" }
+        player: { type: [string, "null"] }
+        franchise: { type: [string, "null"] }
+        number: { type: [string, "null"] }
+        variant: { type: [string, "null"] }
+        rarity: { type: [string, "null"], description: "z. B. Base, Parallel, Insert" }
+
+    Price:
+      type: object
+      additionalProperties: false
+      required: [id, card_id, source, currency, price, collected_at]
+      properties:
+        id: { type: string }
+        card_id: { type: string }
+        source: { type: string, description: "z. B. ebay, pwcc, goldin" }
+        currency: { type: string, description: "ISO 4217 (z. B. USD, EUR)" }
+        price: { type: number, format: float }
+        collected_at: { type: string, format: date-time }
+
+    PaginatedCards:
+      type: object
+      additionalProperties: false
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Card"
+        total: { type: integer, minimum: 0 }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+
+    Error:
+      type: object
+      required: [status, error]
+      properties:
+        status: { type: integer }
+        error: { type: string }
+
+  responses:
+    BadRequest:
+      description: Anfrage ungültig
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            missingParam:
+              value: { status: 400, error: "Parameter 'cardId' ist erforderlich." }
+    NotFound:
+      description: Ressource nicht gefunden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            notFound:
+              value: { status: 404, error: "Karte nicht gefunden." }
+YAML
+
+          cat > mocks/sets.json <<'JSON'
+[
+  { "id": "set_1986_fleer_basketball", "name": "Fleer Basketball 1986-87", "release_date": "1986-08-01" },
+  { "id": "set_2020_uefa_chrome", "name": "Topps Chrome UEFA 2020/21", "release_date": "2020-08-19" }
+]
+JSON
+
+          cat > mocks/cards_page_1.json <<'JSON'
+{
+  "page": 1,
+  "pageSize": 24,
+  "total": 2,
+  "items": [
+    {
+      "id": "card_jordan_rc",
+      "set_id": "set_1986_fleer_basketball",
+      "player": "Michael Jordan",
+      "franchise": "Chicago Bulls",
+      "number": "57",
+      "variant": null,
+      "rarity": "Base"
+    },
+    {
+      "id": "card_messi_tc",
+      "set_id": "set_2020_uefa_chrome",
+      "player": "Lionel Messi",
+      "franchise": "FC Barcelona",
+      "number": "10",
+      "variant": "Refractor",
+      "rarity": "Parallel"
+    }
+  ]
+}
+JSON
+
+          cat > mocks/card_card_jordan_rc.json <<'JSON'
+{
+  "id": "card_jordan_rc",
+  "set_id": "set_1986_fleer_basketball",
+  "player": "Michael Jordan",
+  "franchise": "Chicago Bulls",
+  "number": "57",
+  "variant": null,
+  "rarity": "Base"
+}
+JSON
+
+          cat > mocks/prices_snapshot_card_jordan_rc.json <<'JSON'
+[
+  { "id": "px1", "card_id": "card_jordan_rc", "source": "ebay", "currency": "USD", "price": 8500, "collected_at": "2024-12-15T10:00:00Z" },
+  { "id": "px2", "card_id": "card_jordan_rc", "source": "ebay", "currency": "USD", "price": 8300, "collected_at": "2024-12-01T10:00:00Z" },
+  { "id": "px3", "card_id": "card_jordan_rc", "source": "ebay", "currency": "USD", "price": 8100, "collected_at": "2024-11-15T10:00:00Z" }
+]
+JSON
+
+          cat > mocks/card_card_messi_tc.json <<'JSON'
+{
+  "id": "card_messi_tc",
+  "set_id": "set_2020_uefa_chrome",
+  "player": "Lionel Messi",
+  "franchise": "FC Barcelona",
+  "number": "10",
+  "variant": "Refractor",
+  "rarity": "Parallel"
+}
+JSON
+
+          cat > mocks/prices_snapshot_card_messi_tc.json <<'JSON'
+[
+  { "id": "pxm1", "card_id": "card_messi_tc", "source": "ebay", "currency": "EUR", "price": 420, "collected_at": "2025-06-01T09:00:00Z" },
+  { "id": "pxm2", "card_id": "card_messi_tc", "source": "ebay", "currency": "EUR", "price": 405, "collected_at": "2025-05-15T09:00:00Z" },
+  { "id": "pxm3", "card_id": "card_messi_tc", "source": "ebay", "currency": "EUR", "price": 398, "collected_at": "2025-05-01T09:00:00Z" }
+]
+JSON
+
+          cat > README_A1.md <<'MD'
+# A1 – API-Kontrakt & Mock-Daten (Read-Only)
+Endpunkte: GET /sets, GET /cards, GET /cards/{id}, GET /prices/snapshot
+Keine Writes, keine Live-Feeds. Lovable nutzt nur READ.
+MD
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: task/a1-openapi-mocks
+          delete-branch: true
+          title: "Task A1: API-Kontrakt & Mock-Daten"
+          body: "Automatisch erstellt. Bitte prüfen & mergen."
+          commit-message: "feat(a1): add OpenAPI + mocks + README"
+          signoff: true
