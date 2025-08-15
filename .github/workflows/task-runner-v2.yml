@@ -44,11 +44,19 @@ jobs:
             echo "Wrote $path"
           done
 
+      # >>> NEW: garantiert eine Änderung pro Run
+      - name: Force change marker
+        run: |
+          mkdir -p .ci
+          echo "run=${{ github.run_id }} ts=$(date -u +%FT%TZ)" > ".ci/force-${{ github.run_id }}.txt"
+          echo "created .ci/force-${{ github.run_id }}.txt"
+
       - name: Debug – git status
         run: |
           git status --porcelain=v1 || true
           ls -la openapi || true
           ls -la mocks || true
+          ls -la .ci || true
 
       - name: PR erstellen (PAT + gültiger Suffix)
         id: cpr
@@ -58,6 +66,7 @@ jobs:
           add-paths: |
             openapi/**
             mocks/**
+            .ci/**
             README_A2.md
           base: main
           branch: task/${{ inputs.task }}
