@@ -1,5 +1,3 @@
-# A2 – Test-Payload über Runner v2
+# A2 – Read‑only Basis
 
-Dieser PR wurde automatisch aus `payloads/a2.json` erzeugt.
-
-
+OpenAPI + Mockdaten für Lovable vorbereitet.
