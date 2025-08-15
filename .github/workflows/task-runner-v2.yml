@@ -1,39 +1,75 @@
-name: Task Runner v2 (Dropdown → PR + Auto-Merge)
+name: Task Runner v2 (Dropdown → PR + Auto‑Merge)
 
 on:
   workflow_dispatch:
     inputs:
-      payload:
-        description: 'Payload auswählen'
+      task:
+        description: "Payload auswählen"
         required: true
-        default: 'a2'
         type: choice
-        options:
-          - a2
-          - a3
-          - a4
-          - task/auto
+        options: [a2, a3, a4]
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout (full)
         uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          fetch-depth: 0
 
-      - name: Copy payload
-        run: |
-          cp payloads/${{ github.event.inputs.payload }}.json payload.json
+      - name: jq installieren
+        run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Commit changes
+      - name: Payload prüfen
+        id: check
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "chore(task): apply payload ${{ github.event.inputs.payload }}" || echo "No changes"
-          git push
+          set -euo pipefail
+          test -f "payloads/${{ inputs.task }}.json"
+          echo "payload=$(tr -d '\n' < payloads/${{ inputs.task }}.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Dateien aus Payload schreiben
+        run: |
+          set -euo pipefail
+          JSON='${{ steps.check.outputs.payload }}'
+          echo "$JSON" | jq -c '.[]' | while read -r item; do
+            path=$(echo "$item" | jq -r '.path')
+            content=$(echo "$item" | jq -r '.content')
+            mkdir -p "$(dirname "$path")"
+            printf "%b" "$content" > "$path"
+            echo "Wrote $path"
+          done
+
+      - name: Debug – git status
+        run: |
+          git status --porcelain=v1 || true
+          ls -la openapi || true
+          ls -la mocks || true
+
+      - name: PR erstellen (erzwinge Staging der neuen Dateien)
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          add-paths: |
+            openapi/**
+            mocks/**
+            README_A2.md
+          branch: task/${{ inputs.task }}
+          branch-suffix: -${{ github.run_id }}
+          delete-branch: true
+          title: "Task: ${{ inputs.task }} (automated)"
+          body: "Automated by Task Runner v2 using payloads/${{ inputs.task }}.json"
+          commit-message: "chore(task): apply payload ${{ inputs.task }}"
+          signoff: true
+
+      - name: Auto‑Merge (squash)
+        if: steps.cpr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr merge ${{ steps.cpr.outputs['pull-request-number'] }} \
+            --repo "$GITHUB_REPOSITORY" --auto --squash
