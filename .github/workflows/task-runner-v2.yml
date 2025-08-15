@@ -25,7 +25,7 @@ jobs:
       - name: jq installieren
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Payload prüfen
+      - name: Payload lesen
         id: check
         run: |
           set -euo pipefail
@@ -50,25 +50,28 @@ jobs:
           ls -la openapi || true
           ls -la mocks || true
 
-      - name: PR erstellen (erzwinge Staging der neuen Dateien)
+      - name: PR erstellen (PAT + gültiger Suffix)
         id: cpr
         uses: peter-evans/create-pull-request@v7
         with:
+          token: ${{ secrets.PR_AUTOMATION_TOKEN }}
           add-paths: |
             openapi/**
             mocks/**
             README_A2.md
-          branch: task/${{ inputs.task }}-${{ github.run_id }}
+          base: main
+          branch: task/${{ inputs.task }}
+          branch-suffix: timestamp
           delete-branch: true
           title: "Task: ${{ inputs.task }} (automated)"
-          body: "Automated by Task Runner v2 using payloads/${{ inputs.task }}.json"
+          body: "Automated update via payloads/${{ inputs.task }}.json"
           commit-message: "chore(task): apply payload ${{ inputs.task }}"
           signoff: true
 
       - name: Auto‑Merge (squash)
         if: steps.cpr.outputs.pull-request-number != ''
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.PR_AUTOMATION_TOKEN }}
         run: |
           gh pr merge ${{ steps.cpr.outputs['pull-request-number'] }} \
             --repo "$GITHUB_REPOSITORY" --auto --squash
