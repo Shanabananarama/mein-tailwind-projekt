@@ -58,8 +58,7 @@ jobs:
             openapi/**
             mocks/**
             README_A2.md
-          branch: task/${{ inputs.task }}
-          branch-suffix: -${{ github.run_id }}
+          branch: task/${{ inputs.task }}-${{ github.run_id }}
           delete-branch: true
           title: "Task: ${{ inputs.task }} (automated)"
           body: "Automated by Task Runner v2 using payloads/${{ inputs.task }}.json"
