@@ -1,7 +1,7 @@
 name: Sync API to /docs
 
 on:
-  workflow_dispatch: {}   # <-- manueller Start
+  workflow_dispatch: {}     # manueller Start
   push:
     branches: [main]
     paths:
@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   sync:
@@ -28,9 +29,8 @@ jobs:
           mkdir -p docs/api
           cp -R openapi docs/api/openapi
           cp -R mocks   docs/api/mocks
-          # Pages: Jekyll ausschalten
+          # Jekyll deaktivieren & einfacher Index
           touch docs/.nojekyll
-          # einfache Index-Seite
           cat > docs/index.html <<'HTML'
           <!doctype html><meta charset="utf-8">
           <title>API Index</title>
@@ -42,14 +42,21 @@ jobs:
           </ul>
           HTML
 
-      - name: Commit changes (if any)
-        run: |
-          if [ -n "$(git status --porcelain docs)" ]; then
-            git config user.name  "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add docs
-            git commit -m "chore(docs): sync api → /docs (manual/auto)"
-            git push
-          else
-            echo "No changes to commit."
-          fi
+      - name: Create PR (if changes)
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(docs): sync api → /docs"
+          branch: docs/sync-${{ github.run_id }}
+          title: "chore(docs): sync api → /docs"
+          body: "Automated sync of openapi/ & mocks/ to docs/ for GitHub Pages."
+          labels: "docs, automated"
+          add-paths: |
+            docs/.nojekyll
+            docs/index.html
+            docs/api/**
+
+      - name: PR URL
+        if: steps.cpr.outputs.pull-request-url != ''
+        run: echo "PR: ${{ steps.cpr.outputs.pull-request-url }}"
