@@ -3,14 +3,100 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Card Detail</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <title>Karte – Detail</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;line-height:1.4;margin:2rem;max-width:900px}
+    header{display:flex;gap:1rem;align-items:center;margin-bottom:1.5rem}
+    a{color:#2563eb;text-decoration:none} a:hover{text-decoration:underline}
+    .badge{display:inline-block;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;padding:.15rem .4rem;border-radius:.4rem;font-size:.8rem}
+    .card{border:1px solid #e5e7eb;border-radius:.6rem;padding:1rem}
+    dt{font-weight:600} dd{margin:0 0 .6rem 0}
+    .muted{color:#6b7280}
+    .error{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:.8rem;border-radius:.5rem}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+  </style>
 </head>
 <body>
-  <main>
-    <h1 id="title">Karte</h1>
-    <div id="content">Lade…</div>
-  </main>
-  <script src="./scripts/detail.js"></script>
+  <header>
+    <a href="./" aria-label="Zurück zur API-Seite">← Zurück</a>
+    <span class="badge">Demo</span>
+    <h1 style="margin:0">Kartendetail</h1>
+  </header>
+
+  <p class="muted">Nutzlastquelle: <code class="mono">/api/mocks/cards_page_1.json</code></p>
+
+  <section id="out"></section>
+
+  <script>
+    // kleine Hilfen
+    function getId() {
+      const p = new URLSearchParams(window.location.search);
+      return p.get('id');
+    }
+    function el(tag, attrs={}, children=[]) {
+      const n = document.createElement(tag);
+      for (const [k,v] of Object.entries(attrs)) {
+        if (k === 'class') n.className = v;
+        else if (k === 'text') n.textContent = v;
+        else n.setAttribute(k, v);
+      }
+      for (const c of children) n.append(c);
+      return n;
+    }
+
+    const OUT = document.getElementById('out');
+    const id = getId();
+
+    async function run() {
+      if (!id) {
+        OUT.append(
+          el('div',{class:'error'},[
+            el('strong',{text:'Fehlende ID. '}),
+            document.createTextNode('Rufe die Seite mit einem Parameter '),
+            el('code',{class:'mono',text:'?id='}),
+            document.createTextNode(' auf. Beispiele: '),
+            el('a',{href:'./detail.html?id=card_messi_tc',text:'Messi'}),
+            document.createTextNode(' · '),
+            el('a',{href:'./detail.html?id=card_jordan_rc',text:'Jordan'}),
+          ])
+        );
+        return;
+      }
+
+      try {
+        // Relativer Pfad, weil GitHub Pages auf /docs rooted ist
+        const res = await fetch('./api/mocks/cards_page_1.json', {cache:'no-store'});
+        if (!res.ok) throw new Error('HTTP '+res.status);
+        const data = await res.json();
+
+        const item = (data.items || []).find(x => x.id === id);
+        if (!item) {
+          OUT.append(el('div',{class:'error',text:`Keine Karte mit id="${id}" gefunden.`}));
+          return;
+        }
+
+        const dl = el('dl',{},[
+          el('dt',{text:'ID'}),               el('dd',{text:item.id}),
+          el('dt',{text:'Set-ID'}),           el('dd',{text:item.set_id}),
+          el('dt',{text:'Spieler'}),          el('dd',{text:item.player}),
+          el('dt',{text:'Franchise'}),        el('dd',{text:item.franchise}),
+          el('dt',{text:'Nummer'}),           el('dd',{text:String(item.number)}),
+          el('dt',{text:'Variante'}),         el('dd',{text:item.variant ?? '—'}),
+          el('dt',{text:'Seltenheit'}),       el('dd',{text:item.rarity ?? '—'}),
+        ]);
+
+        OUT.append(
+          el('div',{class:'card'},[
+            el('h2',{text:item.player}),
+            dl
+          ])
+        );
+      } catch (e) {
+        OUT.append(el('div',{class:'error',text:'Fehler beim Laden: '+(e && e.message ? e.message : String(e))}));
+      }
+    }
+
+    run();
+  </script>
 </body>
 </html>
