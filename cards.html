@@ -3,78 +3,57 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Karten – TradingCards Demo</title>
-  <link rel="icon" href="data:," />
-  <style>
-    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial; margin: 0; padding: 24px; color: #0f172a; background: #f8fafc; }
-    header { display:flex; align-items:center; gap:12px; margin-bottom: 24px; }
-    a.back { text-decoration: none; color:#2563eb; }
-    h1 { font-size: 28px; margin: 0; }
-    .meta { color:#475569; font-size:14px; }
-    .grid { display:grid; gap:16px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
-    .card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:16px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
-    .title { font-weight: 700; margin: 0 0 8px; font-size: 16px; color:#0f172a;}
-    .row { margin: 2px 0; color:#334155; font-size: 14px; }
-    .row b { color:#0f172a; }
-    .open { display:inline-block; margin-top:10px; padding:8px 10px; background:#111827; color:#fff; border-radius:8px; text-decoration:none; font-size:13px; }
-    .src { margin-top:24px; font-size:12px; color:#64748b; }
-    .pill { font-size:12px; background:#eef2ff; color:#3730a3; padding:2px 8px; border-radius:999px; margin-left:8px;}
-  </style>
+  <title>Karten – Übersicht</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <header>
-    <a class="back" href="./">← Zurück</a>
-    <h1>Kartenübersicht <span class="pill">Demo</span></h1>
+<body class="bg-slate-50 text-slate-900">
+  <header class="max-w-6xl mx-auto px-4 py-6">
+    <h1 class="text-3xl font-bold">Karten</h1>
+    <p class="text-sm text-slate-500 mt-2">Quelle: <code>/api/mocks/cards_page_1.json</code></p>
   </header>
 
-  <div class="meta">Datenquelle: <code id="src"></code></div>
-
-  <main id="list" class="grid" aria-busy="true" aria-live="polite"></main>
-
-  <p class="src">
-    Nutzlast: <a id="srcLink" href="#" target="_blank" rel="noopener">/api/mocks/cards_page_1.json</a>
-  </p>
+  <main id="app" class="max-w-6xl mx-auto px-4 pb-16">
+    <div id="status" class="text-slate-500">Lade…</div>
+    <div id="grid" class="mt-6 grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"></div>
+  </main>
 
   <script>
-    (async () => {
-      const SRC = "./api/mocks/cards_page_1.json";
-      document.getElementById("src").textContent = SRC.replace("./", "/");
-      document.getElementById("srcLink").href = SRC;
+    const STATUS = document.getElementById('status');
+    const GRID = document.getElementById('grid');
 
-      const wrap = document.getElementById("list");
-      wrap.textContent = "Lade…";
-
+    async function load() {
       try {
-        const res = await fetch(SRC, { cache: "no-store" });
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        const res = await fetch('/api/mocks/cards_page_1.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
 
-        wrap.setAttribute("aria-busy", "false");
-        wrap.textContent = "";
+        STATUS.remove();
 
-        (data.items || []).forEach(item => {
-          const el = document.createElement("article");
-          el.className = "card";
-          el.innerHTML = `
-            <h2 class="title">${item.player}</h2>
-            <p class="row"><b>ID:</b> ${item.id}</p>
-            <p class="row"><b>Set:</b> ${item.set_id}</p>
-            <p class="row"><b>Franchise:</b> ${item.franchise}</p>
-            <p class="row"><b>Nr.:</b> ${item.number ?? "—"}</p>
-            <p class="row"><b>Variante:</b> ${item.variant ?? "—"}</p>
-            <p class="row"><b>Seltenheit:</b> ${item.rarity ?? "—"}</p>
-            <a class="open" href="./detail.html?id=${encodeURIComponent(item.id)}">Details öffnen</a>
+        (data.items || []).forEach(card => {
+          const a = document.createElement('a');
+          a.href = 'detail.html?id=' + encodeURIComponent(card.id);
+          a.className = 'block rounded-xl bg-white p-4 shadow hover:shadow-md border border-slate-200 transition';
+          a.innerHTML = `
+            <div class="text-lg font-semibold mb-1">${card.player}</div>
+            <div class="text-sm text-slate-500 mb-2">${card.franchise}</div>
+            <dl class="text-sm space-y-1">
+              <div class="flex gap-2"><dt class="text-slate-500 w-24">ID</dt><dd>${card.id}</dd></div>
+              <div class="flex gap-2"><dt class="text-slate-500 w-24">Variante</dt><dd>${card.variant ?? '—'}</dd></div>
+              <div class="flex gap-2"><dt class="text-slate-500 w-24">Seltenheit</dt><dd>${card.rarity ?? '—'}</dd></div>
+            </dl>
           `;
-          wrap.appendChild(el);
+          GRID.appendChild(a);
         });
 
-        if (!wrap.children.length) {
-          wrap.textContent = "Keine Karten gefunden.";
+        if (!GRID.children.length) {
+          GRID.innerHTML = '<div class="text-slate-500">Keine Karten gefunden.</div>';
         }
       } catch (err) {
-        wrap.textContent = "Fehler beim Laden der Karten: " + err.message;
+        STATUS.textContent = 'Fehler beim Laden.';
+        console.error(err);
       }
-    })();
+    }
+    load();
   </script>
 </body>
 </html>
