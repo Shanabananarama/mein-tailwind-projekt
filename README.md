@@ -1,3 +1,16 @@
-## Task A1 Bootstrap
+# Mein Tailwind Projekt — TradingCards
 
-Initial API setup for Lovable integration.
+[![Pages](https://img.shields.io/badge/GitHub%20Pages-live-brightgreen)](https://shanabananarama.github.io/mein-tailwind-projekt/)
+[![OpenAPI](https://img.shields.io/badge/OpenAPI-YAML-blue)](https://shanabananarama.github.io/mein-tailwind-projekt/api/openapi/openapi.yaml)
+[![Mocks](https://img.shields.io/badge/Mocks-JSON-orange)](https://shanabananarama.github.io/mein-tailwind-projekt/api/mocks/)
+
+## Live API & Mocks
+
+- **OpenAPI** (YAML):  
+  https://shanabananarama.github.io/mein-tailwind-projekt/api/openapi/openapi.yaml
+
+- **Mocks**:  
+  - Karten (Page 1): https://shanabananarama.github.io/mein-tailwind-projekt/api/mocks/cards_page_1.json  
+  - Sets: https://shanabananarama.github.io/mein-tailwind-projekt/api/mocks/sets.json
+
+> Die Inhalte werden automatisch nachgeführt (manuell via *Sync API to /docs* oder nächtlich via Cron).
