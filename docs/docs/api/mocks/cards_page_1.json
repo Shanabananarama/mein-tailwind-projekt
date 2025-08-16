@@ -1,0 +1,14 @@
+{
+  "cards": [
+    {
+      "id": "card_messi_tc",
+      "title": "Lionel Messi",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/8/89/Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg",
+      "price": "$1,200",
+      "year": "2022",
+      "team": "Argentina",
+      "league": "FIFA World Cup",
+      "description": "World Cup Champion 2022, considered one of the greatest players of all time."
+    }
+  ]
+}
