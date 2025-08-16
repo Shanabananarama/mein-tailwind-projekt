@@ -1,0 +1,9 @@
+{
+  "page": 1,
+  "pageSize": 24,
+  "total": 2,
+  "items": [
+    { "id": "card_jordan_rc", "set_id": "set_1986_fleer_basketball", "player": "Michael Jordan", "franchise": "Chicago Bulls", "number": "57", "variant": null, "rarity": "Base" },
+    { "id": "card_messi_tc", "set_id": "set_2020_uefa_chrome", "player": "Lionel Messi", "franchise": "FC Barcelona", "number": "10", "variant": "Refractor", "rarity": "Parallel" }
+  ]
+}
