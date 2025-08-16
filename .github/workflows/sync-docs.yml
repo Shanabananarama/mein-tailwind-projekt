@@ -51,7 +51,6 @@ jobs:
           branch: docs/sync-${{ github.run_id }}
           title: "chore(docs): sync api → /docs"
           body: "Automated sync of openapi/ & mocks/ to docs/ for GitHub Pages."
-          labels: "docs, automated"
           add-paths: |
             docs/.nojekyll
             docs/index.html
