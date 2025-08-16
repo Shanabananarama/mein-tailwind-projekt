@@ -59,4 +59,4 @@ jobs:
 
       - name: PR URL
         if: steps.cpr.outputs.pull-request-url != ''
-        run: echo "PR: ${{ steps.cpr.outputs.pull-request-url }}"
+        run: echo PR=${{ steps.cpr.outputs.pull-request-url }}
