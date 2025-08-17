@@ -1,106 +1,67 @@
 /* eslint-env browser */
+"use strict";
 
-(function () {
-  // ---- Helpers -------------------------------------------------------------
+const SOURCE = "api/mocks/cards_page_1.json";
 
-  const byId = (id) => document.getElementById(id);
-  const $title = byId('card-title');         // <h1 id="card-title">Kartendetail</h1> (optional)
-  const $container = byId('card-container'); // <div id="card-container"></div>
-  const $source = byId('data-source');       // <span id="data-source"></span>
-  const $error = byId('card-error');         // <div id="card-error"></div>
+function $(id) {
+  return document.getElementById(id);
+}
 
-  // Robust ermitteln: Projekt-Basispfad (funktioniert lokal & auf GitHub Pages)
-  // /mein-tailwind-projekt/detail.html  -> /mein-tailwind-projekt/
-  const PROJECT_BASE = location.pathname.replace(/\/[^/]*$/, '/');
+function setText(id, value) {
+  const el = $(id);
+  if (el) el.textContent = value ?? "—";
+}
 
-  // Einheitliche Datenquelle
-  const DATA_PATH_REL = 'api/mocks/cards_page_1.json';
-  const DATA_URL = PROJECT_BASE + DATA_PATH_REL;
+function showError(message) {
+  const err = $("error");
+  if (err) {
+    err.classList.remove("hidden");
+    err.textContent = `❌ ${message}`;
+  } else {
+    console.error(message);
+    alert(message);
+  }
+}
 
-  // URL-Parameter lesen
-  function getQueryId() {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get('id');
-      return (id && id.trim()) || null;
-    } catch {
-      return null;
-    }
+(async function main() {
+  const src = $("source");
+  if (src) src.textContent = SOURCE;
+
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+  if (!id) {
+    showError("Keine Karten-ID übergeben (?id=...).");
+    return;
   }
 
-  function renderError(msg) {
-    if ($error) {
-      $error.textContent = `❌ ${msg}`;
-      $error.style.display = 'block';
+  let data;
+  try {
+    const res = await fetch(SOURCE, { cache: "no-store" });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
     }
-    if ($container) $container.innerHTML = '';
+    data = await res.json();
+  } catch (err) {
+    showError(`Daten konnten nicht geladen werden (${err.message}).`);
+    return;
   }
 
-  function renderCard(card) {
-    if ($title) $title.textContent = 'Kartendetail';
-    if ($source) $source.textContent = DATA_PATH_REL;
-
-    if (!$container) return;
-
-    const rows = [
-      ['ID', card.id],
-      ['Set-ID', card.set_id],
-      ['Spieler', card.player],
-      ['Franchise', card.franchise],
-      ['Nummer', card.number ?? '—'],
-      ['Variante', card.variant ?? '—'],
-      ['Seltenheit', card.rarity ?? '—'],
-    ];
-
-    $container.innerHTML = `
-      <div class="card">
-        <h2>${card.player}</h2>
-        <dl>
-          ${rows
-            .map(
-              ([label, value]) => `
-              <div class="row">
-                <dt>${label}</dt>
-                <dd>${value}</dd>
-              </div>`
-            )
-            .join('')}
-        </dl>
-      </div>
-    `;
+  const items = Array.isArray(data?.items) ? data.items : [];
+  const card = items.find((c) => c.id === id);
+  if (!card) {
+    showError(`Keine Karte mit id='${id}' gefunden.`);
+    return;
   }
 
-  // ---- Ablauf --------------------------------------------------------------
+  setText("title", card.player);
+  setText("value-id", card.id);
+  setText("value-set", card.set_id);
+  setText("value-player", card.player);
+  setText("value-franchise", card.franchise);
+  setText("value-number", card.number);
+  setText("value-variant", card.variant);
+  setText("value-rarity", card.rarity);
 
-  (async function main() {
-    const id = getQueryId();
-    if (!id) {
-      renderError('Kein Karten-Parameter (?id=…) angegeben.');
-      return;
-    }
-
-    try {
-      // Daten laden
-      const res = await fetch(DATA_URL, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-
-      // Karte finden
-      const items = Array.isArray(data.items) ? data.items : data;
-      const card = (items || []).find((c) => c && c.id === id);
-
-      if (!card) {
-        renderError(`Keine Karte mit id="${id}" gefunden.`);
-        return;
-      }
-
-      // Erfolg
-      if ($error) $error.style.display = 'none';
-      renderCard(card);
-    } catch (e) {
-      renderError('Fehler beim Laden der Karte.');
-      // Optionale Dev-Info in der Konsole
-      console.error('[detail] load error', e);
-    }
-  })();
+  const ok = $("ok");
+  if (ok) ok.classList.remove("hidden");
 })();
