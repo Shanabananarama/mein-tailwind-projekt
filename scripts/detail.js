@@ -1,40 +1,86 @@
-document.addEventListener("DOMContentLoaded", () => {
-  try {
-    // Nur im Browser verfügbar
-    const params = new URLSearchParams(window.location.search);
-    const cardId = params.get("id");
+/* eslint-env browser */
+"use strict";
 
-    if (!cardId) {
-      throw new Error("Keine Karten-ID in der URL gefunden");
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function showError(message) {
+  setText("card-title", "");
+  setText("card-series", "");
+  setText("card-description", "");
+  setText("card-price", "");
+  setText("card-trend", "");
+  setText("card-limited", "");
+  console.error("[detail]", message);
+}
+
+async function loadData() {
+  const candidates = [
+    "data/cards.json",                  // ✅ Hauptpfad (korrekt für GitHub Pages)
+    "./data/cards.json",
+    "api/mocks/cards_page_1.json",
+    "mocks/cards_page_1.json"
+  ];
+
+  for (const url of candidates) {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (res.ok) {
+        const json = await res.json();
+        return { url, json };
+      }
+    } catch (_) {
+      // nächsten Kandidaten probieren
+    }
+  }
+  throw new Error("Keine Datenquelle erreichbar.");
+}
+
+function renderCard(card) {
+  setText("card-title", card.title || card.name || "-");
+  setText("card-series", card.franchise || card.team || "-");
+  setText("card-description", card.description || "");
+  setText("card-price", card.price != null ? String(card.price) : "-");
+  setText("card-trend", card.trend != null ? String(card.trend) : "-");
+  setText("card-limited", card.limited != null ? String(card.limited) : "-");
+
+  const img = document.getElementById("card-image");
+  if (img) {
+    img.alt = card.title || card.name || "Kartenbild";
+    if (card.image) {
+      img.src = card.image;
+    } else {
+      img.removeAttribute("src");
+    }
+  }
+}
+
+async function main() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+
+  if (!id) {
+    showError("Fehlende Karten-ID (?id=...)");
+    return;
+  }
+
+  try {
+    const { json } = await loadData();
+    const list = Array.isArray(json) ? json : (Array.isArray(json.cards) ? json.cards : []);
+    if (!list.length) throw new Error("Datensatz leer oder unbekanntes Format.");
+
+    const card = list.find((c) => c && (c.id === id));
+    if (!card) {
+      showError(`Karte mit ID "${id}" nicht gefunden.`);
+      return;
     }
 
-    // Karten-Daten laden
-    fetch("./data/cards.json")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Fehler beim Laden der Daten");
-        }
-        return res.json();
-      })
-      .then((cards) => {
-        const card = cards.find((c) => c.id === cardId);
-        if (!card) {
-          throw new Error("Karte nicht gefunden");
-        }
-
-        // Beispiel: Details einfügen
-        document.querySelector("body").innerHTML += `
-          <h2>${card.name}</h2>
-          <p>${card.team}</p>
-          <img src="${card.image}" alt="${card.name}" />
-        `;
-      })
-      .catch((err) => {
-        console.error(err);
-        document.querySelector("body").innerHTML += `<p style="color:red">❌ Fehler beim Laden der Karte.</p>`;
-      });
+    renderCard(card);
   } catch (err) {
-    console.error(err);
-    document.querySelector("body").innerHTML += `<p style="color:red">❌ Fehler beim Laden der Karte.</p>`;
+    showError("Fehler beim Laden: " + (err.message || String(err)));
   }
-});
+}
+
+window.addEventListener("DOMContentLoaded", main);
