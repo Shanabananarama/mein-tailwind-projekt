@@ -1,70 +1,72 @@
 /* eslint-env browser */
+(() => {
+  // Kleine Hilfen
+  const $ = (sel) => document.querySelector(sel);
+  const setText = (sel, value) => {
+    const el = $(sel);
+    if (el) el.textContent = value ?? "";
+  };
+  const showError = (msg) => setText("#error", msg);
 
-(function () {
-  "use strict";
+  // ID aus der URL holen (?id=...)
+  const getId = () => new URLSearchParams(window.location.search).get("id") || "";
 
-  // ---------- helpers ----------
-  const $ = (id) => document.getElementById(id);
-  const setText = (id, v) => { const el = $(id); if (el) el.textContent = v != null && v !== "" ? String(v) : "—"; };
-  function showError(message, detail) {
-    const host = document.getElementById("detail-root") || document.body;
-    const box = document.createElement("div");
-    box.style.color = "#d00";
-    box.style.fontSize = "clamp(18px,2.2vw,28px)";
-    box.style.margin = "24px";
-    box.innerHTML = `✖ ${message}${detail ? `<div style="color:#888;font-size:0.9em;margin-top:6px">${detail}</div>` : ""}`;
-    host.appendChild(box);
+  // Robust: mehrere mögliche Pfade probieren, bis einer klappt
+  async function loadCardsJson() {
+    const candidates = [
+      "./api/mocks/cards_page_1.json",
+      "./mocks/cards_page_1.json",
+      // absolute Fallbacks (GitHub Pages Repo-Root)
+      "/mein-tailwind-projekt/api/mocks/cards_page_1.json",
+      "/mein-tailwind-projekt/mocks/cards_page_1.json",
+    ];
+
+    let lastErr;
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (res.ok) return res.json();
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr ?? new Error("Konnte keine Kartenquelle laden.");
   }
 
-  // ---------- read ?id= ----------
-  let cardId = null;
-  try { cardId = new URLSearchParams(window.location.search || "").get("id"); } catch (_) {}
-  if (!cardId) { showError("Fehler beim Laden der Karte (keine ID übergeben)."); return; }
+  async function render() {
+    try {
+      const id = getId();
+      if (!id) {
+        showError("❌ Kein Karten-Parameter übergeben (?id=...).");
+        return;
+      }
 
-  // ---------- absolute repo root ----------
-  // Z.B. https://shanabananarama.github.io/mein-tailwind-projekt/
-  const REPO = "mein-tailwind-projekt";
-  const ROOT = `${window.location.origin}/${REPO}/`;
+      const data = await loadCardsJson();
+      const items = Array.isArray(data) ? data : data?.items;
+      if (!Array.isArray(items)) throw new Error("Unerwartetes JSON-Format.");
 
-  // Wir versuchen erst die JSON unter /mocks/, dann /api/mocks/
-  const SOURCES = [
-    `${ROOT}mocks/cards_page_1.json`,
-    `${ROOT}api/mocks/cards_page_1.json`
-  ];
+      const card = items.find((c) => c.id === id);
+      if (!card) {
+        showError(`❌ Karte „${id}“ nicht gefunden.`);
+        return;
+      }
 
-  function fetchFirstOk(urls) {
-    let tried = [];
-    return urls.reduce(
-      (p, url) =>
-        p.catch(() =>
-          fetch(url, { cache: "no-store" }).then(async (r) => {
-            if (!r.ok) throw new Error(`HTTP ${r.status} @ ${url}`);
-            const text = await r.text();
-            try { return JSON.parse(text); }
-            catch { throw new Error(`Kein gültiges JSON @ ${url}`); }
-          })
-        ),
-      Promise.reject(new Error("init"))
-    ).catch((err) => {
-      throw new Error(`Quellen versucht: ${urls.join(", ")} — Grund: ${err.message}`);
-    });
+      // Daten setzen – nur wenn das Ziel-Element existiert
+      setText("#player-name", card.player);
+      setText("#franchise", card.franchise);
+      setText("#number", String(card.number ?? "—"));
+      setText("#variant", card.variant ?? "—");
+      setText("#rarity", card.rarity ?? "—");
+
+      // Fehlerzeile leeren, falls vorher etwas stand
+      showError("");
+    } catch (e) {
+      // Eine bewusst knappe, user-freundliche Meldung
+      showError("❌ Fehler beim Laden der Karte.");
+      // Entwickler-Detail ins Console-Log
+      console.error("[detail] Render-Fehler:", e);
+    }
   }
 
-  fetchFirstOk(SOURCES)
-    .then((data) => {
-      const items = Array.isArray(data?.items) ? data.items : data;
-      const card = Array.isArray(items) ? items.find((c) => c?.id === cardId) : null;
-
-      if (!card) { showError("Karte nicht gefunden."); return; }
-
-      setText("name", card.player || "");
-      setText("id", card.id);
-      setText("setId", card.set_id);
-      setText("player", card.player);
-      setText("franchise", card.franchise);
-      setText("number", card.number);
-      setText("variant", card.variant);
-      setText("rarity", card.rarity);
-    })
-    .catch((e) => { showError("Fehler beim Laden der Karte.", e.message || ""); });
+  document.addEventListener("DOMContentLoaded", render);
 })();
