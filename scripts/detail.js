@@ -3,10 +3,8 @@
 "use strict";
 
 /**
- * Robustes Rendering des Kartendetails.
- * - Funktioniert auf GitHub Pages (relative Daten-URL)
- * - Bricht CI nicht mehr (Browser-Globals deklariert)
- * - Rendert DOM sicher (Elemente werden erzeugt)
+ * Robustes Detail-Rendering: versucht beide Datenpfade (api/mocks/… & mocks/…),
+ * löst GitHub-Pages-Basis korrekt auf, rendert sichere DOM-Ausgabe.
  */
 
 (function () {
@@ -14,15 +12,15 @@
   const statusEl = document.getElementById("status");
   const sourceEl = document.getElementById("source");
 
-  function setStatus(msg) {
-    if (statusEl) {
-      statusEl.textContent = msg;
-      statusEl.classList.remove("hidden");
-    }
+  function setStatus(msg, title) {
+    if (!statusEl) return;
+    statusEl.textContent = msg;
+    if (title) statusEl.title = title;
+    statusEl.classList.remove("hidden");
   }
 
   function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, (m) => ({
+    return String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
@@ -31,36 +29,50 @@
     })[m]);
   }
 
-  // 1) ID aus der Query lesen
+  // Repo-Basis für GitHub Pages bestimmen: /<repo>/
+  const parts = window.location.pathname.split("/").filter(Boolean);
+  const base = parts.length ? `/${parts[0]}/` : "/";
+
+  // Kandidatenpfade (mit und ohne /api/)
+  const candidates = [
+    `${base}api/mocks/cards_page_1.json`,
+    `${base}mocks/cards_page_1.json`
+  ];
+
   const params = new URLSearchParams(window.location.search);
   const id = params.get("id");
-
   if (!id) {
     setStatus("✖ Fehlende Karten-ID (?id=...).");
     return;
   }
 
-  // 2) Datenquelle relativ zum aktuellen Dokument (funktioniert auf GH Pages)
-  const dataUrl = new URL("api/mocks/cards_page_1.json", window.location.href);
-
-  if (sourceEl) {
-    // Quelle im UI anzeigen
-    sourceEl.textContent = dataUrl.pathname.replace(/^\/+/, "");
+  async function fetchFirstAvailable(urls) {
+    let lastErr;
+    for (const href of urls) {
+      try {
+        const res = await fetch(href, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (sourceEl) sourceEl.textContent = href.replace(window.location.origin + "/", "");
+        return await res.json();
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr || new Error("Keine Quelle erreichbar");
   }
 
-  // 3) Laden + Rendern
-  fetch(dataUrl.href)
-    .then((res) => {
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return res.json();
-    })
-    .then((json) => {
-      const cards = Array.isArray(json) ? json : (json.cards || []);
-      const card = cards.find((c) => c && c.id === id);
-      if (!card) throw new Error("Karte nicht gefunden: " + id);
+  function pickArray(payload) {
+    if (Array.isArray(payload)) return payload;
+    if (payload && Array.isArray(payload.cards)) return payload.cards;
+    if (payload && Array.isArray(payload.items)) return payload.items;
+    return [];
+  }
 
-      const wrap = document.createElement("section");
-      wrap.className = "bg-white p-6 rounded-lg shadow";
+  fetchFirstAvailable(candidates)
+    .then((json) => {
+      const cards = pickArray(json);
+      const card = cards.find((c) => c && c.id === id);
+      if (!card) throw new Error(`Karte nicht gefunden: ${id}`);
 
       const player = escapeHtml(card.player || card.name || id);
       const setId = escapeHtml(card.set_id || card.set || "-");
@@ -69,7 +81,9 @@
       const variant = escapeHtml(card.variant || "-");
       const rarity = escapeHtml(card.rarity || "-");
 
-      wrap.innerHTML = `
+      const section = document.createElement("section");
+      section.className = "bg-white p-6 rounded-lg shadow";
+      section.innerHTML = `
         <h2 class="text-2xl font-bold mb-4">${player}</h2>
         <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
           <div><dt class="text-gray-500">ID</dt><dd class="font-medium">${escapeHtml(card.id)}</dd></div>
@@ -81,10 +95,10 @@
         </dl>
       `;
 
-      if (app) app.replaceChildren(wrap);
+      if (app) app.replaceChildren(section);
     })
     .catch((err) => {
       console.error(err);
-      setStatus("✖ Fehler beim Laden der Karte.");
+      setStatus("✖ Fehler beim Laden der Karte.", String(err && err.message || err));
     });
 })();
