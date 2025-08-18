@@ -2,18 +2,29 @@
 "use strict";
 
 /**
- * Robustes Detail-Rendering ohne URL/URLSearchParams.
- * - Liest ?id=… manuell aus window.location.search
- * - Lädt Daten aus api/mocks/cards_page_1.json
- * - Fehlertolerant für unterschiedliche Feldnamen
+ * Detailseite – robustes Laden:
+ * - Liest ?id=… manuell
+ * - Probiert mehrere mögliche JSON-Pfade (GH Pages /dist-Artefakt / legacy)
+ * - Sauberes Fehler-UI, keine no-undef-Verstöße
  */
 
-const DATA_URL = "api/mocks/cards_page_1.json";
+const CANDIDATE_URLS = [
+  // bevorzugt wie auf der Kartenliste
+  "api/mocks/cards_page_1.json",
+  "./api/mocks/cards_page_1.json",
+  // projekt-Root absolut (GitHub Pages Projektseite)
+  "/mein-tailwind-projekt/api/mocks/cards_page_1.json",
+  // fallback auf legacy-Struktur
+  "mocks/cards_page_1.json",
+  "./mocks/cards_page_1.json",
+  "/mein-tailwind-projekt/mocks/cards_page_1.json"
+];
 
-// DOM-Helper
+// ---------- DOM helpers ----------
+
 const $ = (sel) => document.querySelector(sel);
 
-function provideHostContainer() {
+function ensureHost() {
   let box = $("#card-details");
   if (!box) {
     box = document.createElement("div");
@@ -24,25 +35,29 @@ function provideHostContainer() {
   return box;
 }
 
-function showError(message) {
-  const box = provideHostContainer();
+function showError(msg) {
+  const box = ensureHost();
   box.innerHTML =
     '<div class="text-red-600 text-xl flex items-center gap-2">' +
     "<span aria-hidden>❌</span>" +
-    `<span>${message}</span>` +
+    `<span>${msg}</span>` +
     "</div>";
 }
 
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value != null && value !== "" ? String(value) : "—";
+}
+
 function getIdFromSearch() {
-  const raw = (window.location && window.location.search) || "";
-  const query = raw.startsWith("?") ? raw.slice(1) : raw;
-  if (!query) return "";
-  const parts = query.split("&");
+  const search = (window.location && window.location.search) || "";
+  if (!search) return "";
+  const q = search[0] === "?" ? search.slice(1) : search;
+  const parts = q.split("&");
   for (let i = 0; i < parts.length; i += 1) {
-    const kv = parts[i].split("=");
-    const key = decodeURIComponent(kv[0] || "");
-    if (key === "id") {
-      return decodeURIComponent(kv[1] || "");
+    const [k, v] = parts[i].split("=");
+    if (decodeURIComponent(k || "") === "id") {
+      return decodeURIComponent(v || "");
     }
   }
   return "";
@@ -56,48 +71,49 @@ function normalizeList(json) {
   return [];
 }
 
-function setText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value != null && value !== "" ? String(value) : "—";
+// ---------- robust fetch mit Fallback-Kandidaten ----------
+
+async function fetchFirstOk(urls) {
+  let lastErr = null;
+  for (let i = 0; i < urls.length; i += 1) {
+    const u = urls[i];
+    try {
+      const res = await fetch(u, { cache: "no-store" });
+      if (res.ok) {
+        return res.json();
+      }
+      lastErr = new Error(`HTTP ${res.status} @ ${u}`);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error("Kein Kandidaten-URL erfolgreich");
 }
 
-async function render() {
-  const cardId = getIdFromSearch();
-  if (!cardId) {
+// ---------- main ----------
+
+async function main() {
+  const id = getIdFromSearch();
+  if (!id) {
     showError("Fehler beim Laden der Karte.");
     return;
   }
 
   try {
-    const res = await fetch(DATA_URL, { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-
+    const json = await fetchFirstOk(CANDIDATE_URLS);
     const list = normalizeList(json);
-    const card = list.find((c) => c.id === cardId);
+    const card = list.find((c) => c && c.id === id);
 
     if (!card) {
+      // Karte existiert nicht in der Nutzlast
       showError("Karte nicht gefunden.");
       return;
     }
 
-    const title =
-      card.title ||
-      card.name ||
-      card.player ||
-      card.spieler ||
-      "Karte";
-
+    const title = card.title || card.name || card.player || card.spieler || "Karte";
     const series =
-      card.series ||
-      card.set ||
-      card.set_id ||
-      card.setId ||
-      card.franchise ||
-      "";
-
+      card.series || card.set || card.set_id || card.setId || card.franchise || "";
     const desc = card.description || card.beschreibung || "";
-
     const price = card.price != null ? card.price : card.preis;
     const trend = card.trend != null ? card.trend : card.preis_trend;
     const limited = card.limited != null ? card.limited : card.limitierung;
@@ -109,16 +125,16 @@ async function render() {
     setText("card-trend", trend != null ? `${trend} €` : "—");
     setText("card-limited", limited != null ? String(limited) : "—");
 
-    const imgEl = document.getElementById("card-image");
-    if (imgEl && card.image) {
-      imgEl.src = card.image;
-      imgEl.alt = title;
+    const img = document.getElementById("card-image");
+    if (img && card.image) {
+      img.src = card.image;
+      img.alt = title;
     }
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error("detail.js fetch/render error:", err);
+    console.error("[detail] load error:", err);
     showError("Fehler beim Laden der Karte.");
   }
 }
 
-render();
+main();
