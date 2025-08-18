@@ -1,4 +1,5 @@
 /* eslint-env browser */
+/* global URLSearchParams, URL */
 (() => {
   "use strict";
 
@@ -6,7 +7,6 @@
   const $ = (sel) => document.querySelector(sel);
   const showError = (msg) => {
     const text = `❌ ${msg || "Fehler beim Laden der Karte."}`;
-    // vorhandenen Fehler-Platzhalter nutzen, sonst dynamisch erzeugen
     let box = $("#detail-error");
     if (!box) {
       box = document.createElement("p");
@@ -21,24 +21,25 @@
   };
 
   // ---------- id aus URL ----------
-  const params = new URLSearchParams(window.location.search);
+  // WICHTIG: explizit über window.* -> sonst no-undef im Linter
+  const params = new window.URLSearchParams(window.location.search);
   const cardId = params.get("id");
   if (!cardId) {
     showError("Keine Karten-ID in der URL gefunden.");
     return;
   }
 
-  // Wichtig: KEIN führender Slash (sonst 404 auf GitHub Pages)!
+  // Kein führender Slash auf GitHub Pages!
   const API_URL = "api/mocks/cards_page_1.json";
 
   // ---------- laden & rendern ----------
-  fetch(API_URL, { cache: "no-store" })
+  window
+    .fetch(API_URL, { cache: "no-store" })
     .then((res) => {
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       return res.json();
     })
     .then((json) => {
-      // Quelle kann als Array oder als {cards:[...]} vorliegen
       const list = Array.isArray(json) ? json : (json.cards || []);
       const card = list.find((c) => c.id === cardId);
 
@@ -47,7 +48,6 @@
         return;
       }
 
-      // vorhandenen Container nutzen, sonst anlegen
       let mount = $("#card-details");
       if (!mount) {
         mount = document.createElement("div");
@@ -56,7 +56,6 @@
         document.body.appendChild(mount);
       }
 
-      // möglichst feld-agnostisch rendern (funktioniert mit deinen Mocks)
       const rows = [
         ["ID", card.id],
         ["Set-ID", card.set_id || card.setId || "—"],
@@ -65,16 +64,15 @@
         ["Nummer", card.number || "—"],
         ["Variante", card.variant || "—"],
         ["Seltenheit", card.rarity || "—"]
-      ].map(([k, v]) =>
-        `<div class="flex gap-3"><span class="font-semibold w-28">${k}</span><span>${v}</span></div>`
-      ).join("");
+      ]
+        .map(([k, v]) => `<div class="flex gap-3"><span class="font-semibold w-28">${k}</span><span>${v}</span></div>`)
+        .join("");
 
       mount.innerHTML = `
         <h2 class="text-2xl font-bold mb-4">${card.player || card.name || "Karte"}</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2">${rows}</div>
       `;
 
-      // evtl. vorhandenen Fehlertext ausblenden
       const err = $("#detail-error");
       if (err) err.style.display = "none";
     })
