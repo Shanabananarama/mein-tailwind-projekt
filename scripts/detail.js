@@ -3,12 +3,12 @@
 (function () {
   "use strict";
 
-  // UI-Refs
-  const elError = document.getElementById("error");
-  const elCard = document.getElementById("card");
-  const elDebug = document.getElementById("debug");
+  // UI-Referenzen
+  var elError = document.getElementById("error");
+  var elCard = document.getElementById("card");
+  var elDebug = document.getElementById("debug");
 
-  const els = {
+  var els = {
     title: document.getElementById("title"),
     cid: document.getElementById("cid"),
     setid: document.getElementById("setid"),
@@ -20,15 +20,23 @@
   };
 
   function show(el) {
-    if (el.classList.contains("hidden")) el.classList.remove("hidden");
+    if (el && el.classList && el.classList.contains("hidden")) {
+      el.classList.remove("hidden");
+    }
   }
+
   function hide(el) {
-    if (!el.classList.contains("hidden")) el.classList.add("hidden");
+    if (el && el.classList && !el.classList.contains("hidden")) {
+      el.classList.add("hidden");
+    }
   }
+
   function fail(msg, debug) {
-    elError.textContent = msg;
-    show(elError);
-    if (debug) {
+    if (elError) {
+      elError.textContent = msg;
+      show(elError);
+    }
+    if (debug && elDebug) {
       elDebug.textContent = debug;
       show(elDebug);
     }
@@ -41,64 +49,94 @@
     show(elCard);
   }
 
-  // Sichere Pfadauflösung relativ zu /detail.html
-  function apiUrl(relativePath) {
-    // detail.html liegt im Repo-Root (GitHub Pages: /mein-tailwind-projekt/)
-    const base = window.location.href.replace(/[^/]+$/, "");
-    return new URL(relativePath, base).toString();
+  function getIdFromQuery() {
+    var search = window.location.search || "";
+    try {
+      var params = new window.URLSearchParams(search);
+      var id = params.get("id");
+      return id ? id.trim() : "";
+    } catch (e) {
+      // Fallback: manuelles Parsen
+      if (search.indexOf("?") === 0) {
+        var pairs = search.slice(1).split("&");
+        for (var i = 0; i < pairs.length; i++) {
+          var kv = pairs[i].split("=");
+          if (decodeURIComponent(kv[0]) === "id") {
+            return decodeURIComponent(kv.slice(1).join("=")).trim();
+          }
+        }
+      }
+      return "";
+    }
+  }
+
+  function pick(valA, valB, fallback) {
+    return valA != null && valA !== "" ? valA : (valB != null && valB !== "" ? valB : fallback);
   }
 
   async function main() {
     try {
-      // 1) id aus Query
-      const params = new window.URLSearchParams(window.location.search);
-      const id = (params.get("id") || "").trim();
+      var id = getIdFromQuery();
       if (!id) {
         fail("Fehler: Keine Karten-ID in der URL (?id=...) gefunden.");
         return;
       }
 
-      // 2) JSON laden (gleicher Pfad wie auf cards.html)
-      const src = apiUrl("api/mocks/cards_page_1.json");
-      const res = await fetch(src, { cache: "no-store" });
+      // Statischer, relativer Pfad – identisch zur Kartenliste
+      var src = "api/mocks/cards_page_1.json";
+      var res = await fetch(src, { cache: "no-store" });
       if (!res.ok) {
-        fail("Fehler: Quelle konnte nicht geladen werden.", `HTTP ${res.status} ${res.statusText}\nURL: ${src}`);
+        fail("Fehler: Quelle konnte nicht geladen werden.", "HTTP " + res.status + " " + res.statusText + "\nURL: " + src);
         return;
       }
-      const data = await res.json();
+      var data = await res.json();
 
-      // 3) Datensatz-Struktur robust handhaben:
-      //    Erwarte entweder { items: [...] } oder direkt ein Array
-      const list = Array.isArray(data) ? data : Array.isArray(data.items) ? data.items : [];
+      // {items:[...]} ODER direkt [...]
+      var list = Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : []);
       if (!list.length) {
         fail("Fehler: Die Datenquelle enthält keine Karten.", JSON.stringify(data, null, 2));
         return;
       }
 
-      // 4) Karte nach ID finden
-      const card = list.find((c) => (c && (c.id || c.card_id)) === id);
+      // Karte anhand id finden (robust gegenüber Feldnamen)
+      var card = null;
+      for (var i = 0; i < list.length; i++) {
+        var c = list[i] || {};
+        var cid = c.id != null ? c.id : c.card_id;
+        if (cid === id) {
+          card = c;
+          break;
+        }
+      }
+
       if (!card) {
-        const available = list.slice(0, 20).map((c) => c && (c.id || c.card_id)).filter(Boolean);
-        fail(`Karte mit ID „${id}” wurde nicht gefunden.`, `Verfügbare IDs (Auszug):\n${available.join("\n")}`);
+        var ids = [];
+        for (var j = 0; j < list.length && j < 50; j++) {
+          var x = list[j] || {};
+          var xid = x.id != null ? x.id : x.card_id;
+          if (xid != null) ids.push(xid);
+        }
+        fail("Karte mit ID „" + id + "” wurde nicht gefunden.", "Verfügbare IDs (Auszug):\n" + ids.join("\n"));
         return;
       }
 
-      // 5) Felder abbilden (robust, mit Fallbacks)
-      els.title.textContent = [card.player_name || card.player || "—", card.team || card.franchise || ""]
-        .filter(Boolean)
-        .join(" – ");
+      // Felder zuweisen (robust, mit Fallbacks)
+      var player = pick(card.player_name, card.player, "—");
+      var team = pick(card.team, card.franchise, "");
+      els.title.textContent = team ? (player + " – " + team) : player;
 
-      els.cid.textContent = card.id || card.card_id || "—";
-      els.setid.textContent = card.set_id || card.set || "—";
-      els.player.textContent = card.player_name || card.player || "—";
-      els.franchise.textContent = card.team || card.franchise || "—";
-      els.number.textContent = String(card.number || card.no || "—");
-      els.variant.textContent = card.variant || "—";
-      els.rarity.textContent = card.rarity || "—";
+      els.cid.textContent = pick(card.id, card.card_id, "—");
+      els.setid.textContent = pick(card.set_id, card.set, "—");
+      els.player.textContent = player;
+      els.franchise.textContent = pick(card.team, card.franchise, "—");
+      els.number.textContent = String(pick(card.number, card.no, "—"));
+      els.variant.textContent = pick(card.variant, "", "—");
+      els.rarity.textContent = pick(card.rarity, "", "—");
 
       success();
     } catch (err) {
-      fail("Unerwarteter Fehler beim Laden der Karte.", String(err && err.stack ? err.stack : err));
+      var msg = (err && err.stack) ? String(err.stack) : String(err);
+      fail("Unerwarteter Fehler beim Laden der Karte.", msg);
     }
   }
 
