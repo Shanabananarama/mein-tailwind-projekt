@@ -1,72 +1,90 @@
 /* eslint-env browser */
-(() => {
-  "use strict";
+/* global URL, URLSearchParams */
+"use strict";
 
-  // KORREKTE, live funktionierende Datenquelle auf GitHub Pages
-  const DATA_URL = "https://shanabananarama.github.io/mein-tailwind-projekt/api/mocks/cards_page_1.json";
+/**
+ * Robustes Rendering des Kartendetails.
+ * - Funktioniert auf GitHub Pages (relative Daten-URL)
+ * - Bricht CI nicht mehr (Browser-Globals deklariert)
+ * - Rendert DOM sicher (Elemente werden erzeugt)
+ */
 
-  // ---------- kleine Helpers ----------
-  const $ = (s) => document.querySelector(s);
-  const ensureHost = () => {
-    let box = $("#card-details");
-    if (!box) {
-      box = document.createElement("div");
-      box.id = "card-details";
-      box.className = "bg-white p-6 rounded-lg shadow";
-      document.body.appendChild(box);
+(function () {
+  const app = document.getElementById("app");
+  const statusEl = document.getElementById("status");
+  const sourceEl = document.getElementById("source");
+
+  function setStatus(msg) {
+    if (statusEl) {
+      statusEl.textContent = msg;
+      statusEl.classList.remove("hidden");
     }
-    return box;
-  };
-  const show = (html) => (ensureHost().innerHTML = html);
-  const showError = (msg) =>
-    show(`<p style="color:#dc2626;font-size:1.5rem">❌ ${msg}</p>
-          <p style="color:#6b7280;margin-top:.5rem">Quelle: ${DATA_URL}</p>`);
+  }
 
-  // ---------- ID aus URL ----------
-  const params = new URLSearchParams(location.search);
-  const cardId = params.get("id");
-  if (!cardId) {
-    showError("Keine Karten-ID in der URL gefunden.");
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (m) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[m]);
+  }
+
+  // 1) ID aus der Query lesen
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+
+  if (!id) {
+    setStatus("✖ Fehlende Karten-ID (?id=...).");
     return;
   }
 
-  // ---------- Laden & Rendern ----------
-  (async () => {
-    try {
-      const res = await fetch(DATA_URL, { cache: "no-store" });
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status} ${res.statusText} bei ${res.url}`);
-      }
-      const json = await res.json();
-      const list = Array.isArray(json) ? json : json.cards || [];
-      const card = list.find((c) => c && c.id === cardId);
-      if (!card) {
-        showError(`Karte mit ID "${cardId}" nicht gefunden.`);
-        return;
-      }
+  // 2) Datenquelle relativ zum aktuellen Dokument (funktioniert auf GH Pages)
+  const dataUrl = new URL("api/mocks/cards_page_1.json", window.location.href);
 
-      const rows = [
-        ["ID", card.id],
-        ["Set-ID", card.set_id || card.setId || "—"],
-        ["Spieler", card.player || card.name || "—"],
-        ["Franchise", card.franchise || "—"],
-        ["Nummer", card.number || "—"],
-        ["Variante", card.variant || "—"],
-        ["Seltenheit", card.rarity || "—"],
-      ]
-        .map(
-          ([k, v]) =>
-            `<div class="flex gap-3"><span class="font-semibold w-28">${k}</span><span>${v}</span></div>`
-        )
-        .join("");
+  if (sourceEl) {
+    // Quelle im UI anzeigen
+    sourceEl.textContent = dataUrl.pathname.replace(/^\/+/, "");
+  }
 
-      show(`
-        <h2 class="text-2xl font-bold mb-4">${card.player || card.name || "Karte"}</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2">${rows}</div>
-        <p class="text-sm text-gray-500 mt-3">Quelle: ${DATA_URL}</p>
-      `);
-    } catch (e) {
-      showError(`Fehler beim Laden der Karte. ${e?.message ? "(" + e.message + ")" : ""}`);
-    }
-  })();
+  // 3) Laden + Rendern
+  fetch(dataUrl.href)
+    .then((res) => {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    })
+    .then((json) => {
+      const cards = Array.isArray(json) ? json : (json.cards || []);
+      const card = cards.find((c) => c && c.id === id);
+      if (!card) throw new Error("Karte nicht gefunden: " + id);
+
+      const wrap = document.createElement("section");
+      wrap.className = "bg-white p-6 rounded-lg shadow";
+
+      const player = escapeHtml(card.player || card.name || id);
+      const setId = escapeHtml(card.set_id || card.set || "-");
+      const team = escapeHtml(card.team || card.franchise || "-");
+      const number = card.number != null ? escapeHtml(String(card.number)) : "-";
+      const variant = escapeHtml(card.variant || "-");
+      const rarity = escapeHtml(card.rarity || "-");
+
+      wrap.innerHTML = `
+        <h2 class="text-2xl font-bold mb-4">${player}</h2>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+          <div><dt class="text-gray-500">ID</dt><dd class="font-medium">${escapeHtml(card.id)}</dd></div>
+          <div><dt class="text-gray-500">Set-ID</dt><dd class="font-medium">${setId}</dd></div>
+          <div><dt class="text-gray-500">Franchise</dt><dd class="font-medium">${team}</dd></div>
+          <div><dt class="text-gray-500">Nummer</dt><dd class="font-medium">${number}</dd></div>
+          <div><dt class="text-gray-500">Variante</dt><dd class="font-medium">${variant}</dd></div>
+          <div><dt class="text-gray-500">Seltenheit</dt><dd class="font-medium">${rarity}</dd></div>
+        </dl>
+      `;
+
+      if (app) app.replaceChildren(wrap);
+    })
+    .catch((err) => {
+      console.error(err);
+      setStatus("✖ Fehler beim Laden der Karte.");
+    });
 })();
