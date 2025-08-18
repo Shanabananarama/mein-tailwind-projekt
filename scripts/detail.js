@@ -1,6 +1,4 @@
 /* eslint-env browser */
-/* global URLSearchParams */
-
 (() => {
   "use strict";
 
@@ -25,7 +23,6 @@
   };
 
   const showSource = (url) => {
-    // dezent unter H1 anzeigen
     const h = document.querySelector("h1,h2,.page-title") || document.body;
     let small = $("#source-hint");
     if (!small) {
@@ -40,7 +37,6 @@
   };
 
   // ---------- ID aus der URL ----------
-  // explizit window.* verwenden -> verhindert ESLint no-undef
   const params = new window.URLSearchParams(window.location.search);
   const cardId = params.get("id");
   if (!cardId) {
@@ -49,16 +45,18 @@
   }
 
   // ---------- GitHub Pages Basis erkennen ----------
-  // z.B. /mein-tailwind-projekt/detail.html -> Basis /mein-tailwind-projekt/
   const parts = window.location.pathname.split("/").filter(Boolean);
   const repoBase = parts.length ? `/${parts[0]}/` : "/";
 
-  // Kandidaten in **absoluter** Form aufbauen damit keine Relativ-Pfad-Falle entsteht
-  const makeAbs = (p) => new URL(p.replace(/^\/+/, ""), window.location.origin).toString();
+  // Absoluten URL-String erzeugen (ohne nacktes globales URL)
+  const makeAbs = (p) => {
+    const clean = p.replace(/^\/+/, "");
+    return new window.URL(clean, window.location.origin).toString();
+  };
+
   const candidates = [
     makeAbs(`${repoBase}api/mocks/cards_page_1.json`),
     makeAbs(`${repoBase}mocks/cards_page_1.json`),
-    // zur Sicherheit auch relative Varianten
     "api/mocks/cards_page_1.json",
     "mocks/cards_page_1.json",
   ];
@@ -74,7 +72,7 @@
           continue;
         }
         const data = await res.json();
-        showSource(u); // erfolgreiche Quelle anzeigen
+        showSource(u);
         return data;
       } catch (e) {
         lastErr = new Error(`Netzwerk-/Parsefehler bei ${u}: ${e.message}`);
