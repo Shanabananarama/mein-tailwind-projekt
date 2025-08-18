@@ -2,42 +2,72 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
     <title>Kartendetail</title>
-    <link href="/style/output.css" rel="stylesheet" />
+    <link href="style/output.css" rel="stylesheet" />
   </head>
-
-  <body class="bg-gray-100 text-gray-900">
+  <body class="bg-gray-50 text-gray-900">
     <div class="max-w-6xl mx-auto p-6">
-      <a href="/index.html" class="text-blue-600 hover:underline mb-4 inline-block">← Zurück</a>
+      <a
+        href="index.html"
+        class="text-blue-600 hover:underline inline-flex items-center gap-2"
+      >
+        ← Zurück
+      </a>
 
-      <h1 class="text-3xl font-extrabold tracking-tight mb-6 text-center">Kartendetail</h1>
+      <h1 class="text-4xl font-extrabold tracking-tight text-right mb-8">
+        Kartendetail
+      </h1>
 
-      <div id="card-details" class="bg-white p-6 rounded-lg shadow flex flex-col md:flex-row gap-6">
+      <!-- Fehlerbereich: standardmäßig SICHTBAR; wird bei Erfolg vom Script ausgeblendet -->
+      <div
+        id="detail-error"
+        class="text-red-600 text-2xl flex items-center gap-3 mb-8"
+      >
+        <span class="text-red-600">❌</span>
+        <span>Fehler beim Laden der Karte.</span>
+      </div>
+
+      <!-- Kartenbereich -->
+      <div
+        class="bg-white p-6 rounded-lg shadow flex flex-col md:flex-row gap-6"
+      >
         <!-- Bild -->
-        <div class="flex-shrink-0 w-full md:w-1/3 flex items-center justify-center">
-          <img id="card-image" src="" alt="Kartenbild" class="rounded-lg shadow max-h-96 object-contain" />
+        <div
+          class="flex-shrink-0 w-full md:w-1/3 flex items-center justify-center"
+        >
+          <img
+            id="card-image"
+            src=""
+            alt="Kartenbild"
+            class="rounded-lg shadow max-h-96 object-contain"
+          />
         </div>
 
         <!-- Details -->
         <div class="flex-1">
           <h2 id="card-title" class="text-2xl font-bold mb-2">—</h2>
-          <p id="card-series" class="text-gray-600 mb-1">Serie: —</p>
+          <p id="card-series" class="text-gray-600 mb-1">—</p>
           <p id="card-description" class="text-gray-500 italic mb-4">—</p>
-          <p class="text-lg font-semibold">💰 Preis: <span id="card-price">— €</span></p>
-          <p class="text-lg font-semibold text-green-600">📊 Trend: <span id="card-trend">— €</span></p>
-          <p class="text-gray-500">Limitierung: <span id="card-limited">—</span></p>
-        </div>
-      </div>
 
-      <!-- Chart -->
-      <div class="bg-white p-6 mt-6 rounded-lg shadow">
-        <h3 class="text-xl font-bold mb-4">📉 Preis-Entwicklung</h3>
-        <canvas id="priceChart" class="w-full h-64"></canvas>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <p class="text-lg font-semibold">
+              💰 Preis: <span id="card-price">—</span>
+            </p>
+            <p class="text-lg font-semibold text-green-600">
+              📊 Trend: <span id="card-trend">—</span>
+            </p>
+            <p class="text-gray-700">
+              Limitierung: <span id="card-limited">—</span>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="/scripts/detail.js"></script>
+    <script src="scripts/detail.js"></script>
   </body>
 </html>
