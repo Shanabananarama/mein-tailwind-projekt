@@ -2,72 +2,53 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Kartendetail</title>
     <link href="style/output.css" rel="stylesheet" />
   </head>
-  <body class="bg-gray-50 text-gray-900">
-    <div class="max-w-6xl mx-auto p-6">
-      <a
-        href="index.html"
-        class="text-blue-600 hover:underline inline-flex items-center gap-2"
-      >
-        ← Zurück
-      </a>
+  <body class="bg-gray-100 text-gray-900">
+    <div class="max-w-5xl mx-auto px-6 py-8">
+      <a href="index.html" class="text-indigo-600 hover:underline text-lg">← Zurück</a>
+      <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 mt-6 mb-8">Kartendetail</h1>
 
-      <h1 class="text-4xl font-extrabold tracking-tight text-right mb-8">
-        Kartendetail
-      </h1>
-
-      <!-- Fehlerbereich: standardmäßig SICHTBAR; wird bei Erfolg vom Script ausgeblendet -->
+      <!-- Fehlermeldung -->
       <div
         id="detail-error"
-        class="text-red-600 text-2xl flex items-center gap-3 mb-8"
+        class="hidden text-red-600 text-2xl font-semibold flex items-center gap-3"
       >
-        <span class="text-red-600">❌</span>
+        <span class="text-3xl">❌</span>
         <span>Fehler beim Laden der Karte.</span>
       </div>
 
-      <!-- Kartenbereich -->
+      <!-- Karte -->
       <div
-        class="bg-white p-6 rounded-lg shadow flex flex-col md:flex-row gap-6"
+        id="card-details"
+        class="mt-6 grid gap-8 md:grid-cols-2 bg-white rounded-2xl shadow p-6"
       >
-        <!-- Bild -->
-        <div
-          class="flex-shrink-0 w-full md:w-1/3 flex items-center justify-center"
-        >
+        <div class="flex items-center justify-center">
           <img
             id="card-image"
             src=""
             alt="Kartenbild"
-            class="rounded-lg shadow max-h-96 object-contain"
+            class="rounded-xl shadow max-h-96 object-contain"
           />
         </div>
 
-        <!-- Details -->
-        <div class="flex-1">
-          <h2 id="card-title" class="text-2xl font-bold mb-2">—</h2>
-          <p id="card-series" class="text-gray-600 mb-1">—</p>
-          <p id="card-description" class="text-gray-500 italic mb-4">—</p>
+        <div class="space-y-3">
+          <h2 id="card-title" class="text-2xl font-bold">—</h2>
+          <p id="card-series" class="text-slate-600">—</p>
+          <p id="card-description" class="italic text-slate-500">—</p>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <p class="text-lg font-semibold">
-              💰 Preis: <span id="card-price">—</span>
-            </p>
-            <p class="text-lg font-semibold text-green-600">
-              📊 Trend: <span id="card-trend">—</span>
-            </p>
-            <p class="text-gray-700">
-              Limitierung: <span id="card-limited">—</span>
-            </p>
+          <div class="pt-4 grid grid-cols-2 gap-4">
+            <div class="text-lg">💰 Preis: <span id="card-price" class="font-semibold">—</span></div>
+            <div class="text-lg text-emerald-700">📊 Trend: <span id="card-trend" class="font-semibold">—</span></div>
+            <div class="text-lg col-span-2">Limitierung / Seltenheit: <span id="card-limited" class="font-semibold">—</span></div>
           </div>
         </div>
       </div>
     </div>
 
-    <script src="scripts/detail.js"></script>
+    <!-- WICHTIG: als ES-Modul laden -->
+    <script type="module" src="scripts/detail.js"></script>
   </body>
 </html>
