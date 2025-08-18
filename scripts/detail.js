@@ -2,26 +2,31 @@
 "use strict";
 
 /**
- * Detailseite: robustes Laden der Karten-JSON auf GitHub Pages.
- * - Ermittelt das Projekt-Basisverzeichnis aus der aktuellen URL
- * - Versucht exakt zwei gültige Pfade relativ zu dieser Basis:
- *     {BASE}api/mocks/cards_page_1.json
- *     {BASE}mocks/cards_page_1.json
- * - Findet die Karte mit id===… auch bei verschachtelten JSON-Strukturen
+ * Detailseite – robustes Laden auf GitHub Pages.
+ * - Ermittelt Projektbasis
+ * - Probiert mehrere _absolute_ Kandidaten-URLs (verhindert 404 durch Basis-Verwechslung)
+ * - Sucht Karte rekursiv nach id
  */
 
 (function () {
-  // -------- Basis (funktioniert sicher auf GitHub Pages Projekt-Sites) --------
-  // Beispiel: /mein-tailwind-projekt/detail.html  ->  BASE = "/mein-tailwind-projekt/"
-  var PATH = (window.location && window.location.pathname) || "/";
-  var BASE = PATH.replace(/[^/]+$/, "");
+  // ---------- Projektbasis bestimmen ----------
+  var loc = window.location;
+  var ORIGIN = loc.origin; // z.B. https://shanabananarama.github.io
+  // /mein-tailwind-projekt/detail.html  ->  /mein-tailwind-projekt/
+  var PROJECT_BASE = loc.pathname.replace(/[^/]+$/, "");
 
+  // Kandidaten **absolut** (alle realistischen Varianten)
   var CANDIDATES = [
-    BASE + "api/mocks/cards_page_1.json",
-    BASE + "mocks/cards_page_1.json",
+    // relativ zur aktuellen Seite
+    new URL("api/mocks/cards_page_1.json", ORIGIN + PROJECT_BASE).href,
+    new URL("mocks/cards_page_1.json", ORIGIN + PROJECT_BASE).href,
+
+    // hart kodiert auf Repo-Basis (falls PROJECT_BASE unerwartet abweicht)
+    ORIGIN + "/mein-tailwind-projekt/api/mocks/cards_page_1.json",
+    ORIGIN + "/mein-tailwind-projekt/mocks/cards_page_1.json",
   ];
 
-  // -------- Mini-DOM-Helpers --------
+  // ---------- Mini-Utils ----------
   var $ = function (sel) { return document.querySelector(sel); };
 
   function ensureHost() {
@@ -29,7 +34,6 @@
     if (!box) {
       box = document.createElement("div");
       box.id = "card-details";
-      box.className = "p-4";
       document.body.appendChild(box);
     }
     return box;
@@ -39,90 +43,97 @@
     var box = ensureHost();
     box.innerHTML =
       '<div class="text-red-600 text-xl flex items-center gap-2">' +
-      '<span aria-hidden>❌</span><span>' + msg + "</span></div>";
+      '<span aria-hidden="true">❌</span><span>' + msg + "</span></div>";
   }
 
   function setText(id, value) {
     var el = document.getElementById(id);
-    if (el) el.textContent = (value !== undefined && value !== null && value !== "") ? String(value) : "—";
+    if (!el) return;
+    if (value === undefined || value === null || value === "") {
+      el.textContent = "—";
+    } else {
+      el.textContent = String(value);
+    }
   }
 
-  function getId() {
-    var search = (window.location && window.location.search) || "";
-    if (!search) return "";
-    var q = search.charAt(0) === "?" ? search.slice(1) : search;
+  function getIdFromQuery() {
+    var q = loc.search.replace(/^\?/, "");
+    if (!q) return "";
     var parts = q.split("&");
     for (var i = 0; i < parts.length; i += 1) {
       var kv = parts[i].split("=");
-      var k = decodeURIComponent(kv[0] || "");
-      if (k === "id") return decodeURIComponent(kv[1] || "");
+      if (decodeURIComponent(kv[0] || "") === "id") {
+        return decodeURIComponent(kv[1] || "");
+      }
     }
     return "";
   }
 
-  // -------- JSON laden (zwei korrekte Kandidaten relativ zur Projektbasis) --------
+  // ---------- Laden mit Fallbacks (absolute URLs) ----------
   function fetchFirstOk(urls) {
-    var idx = 0;
+    var i = 0;
     return new Promise(function (resolve, reject) {
-      function next() {
-        if (idx >= urls.length) {
+      function attempt() {
+        if (i >= urls.length) {
           reject(new Error("Keine JSON gefunden"));
           return;
         }
-        var u = urls[idx++];
+        var u = urls[i++];
         fetch(u, { cache: "no-store" })
           .then(function (res) {
             if (!res.ok) throw new Error("HTTP " + res.status + " @ " + u);
             return res.json();
           })
           .then(resolve)
-          .catch(function () { next(); });
+          .catch(function () {
+            attempt(); // nächsten Kandidaten probieren
+          });
       }
-      next();
+      attempt();
     });
   }
 
-  // -------- Karte in beliebiger Struktur finden --------
-  function collectWithId(root, acc) {
-    if (!root) return;
-    if (Array.isArray(root)) {
-      for (var i = 0; i < root.length; i += 1) collectWithId(root[i], acc);
+  // ---------- Karte auffinden (id kann tief verschachtelt sein) ----------
+  function collectWithId(node, acc) {
+    if (!node) return;
+    if (Array.isArray(node)) {
+      for (var i = 0; i < node.length; i += 1) collectWithId(node[i], acc);
       return;
     }
-    if (typeof root === "object") {
-      if (root.id) acc.push(root);
-      for (var k in root) {
-        if (Object.prototype.hasOwnProperty.call(root, k)) {
-          collectWithId(root[k], acc);
+    if (typeof node === "object") {
+      if (Object.prototype.hasOwnProperty.call(node, "id")) acc.push(node);
+      for (var k in node) {
+        if (Object.prototype.hasOwnProperty.call(node, k)) {
+          collectWithId(node[k], acc);
         }
       }
     }
   }
-
   function findById(json, id) {
     var pool = [];
     collectWithId(json, pool);
     for (var i = 0; i < pool.length; i += 1) {
-      if (pool[i] && pool[i].id === id) return pool[i];
+      var it = pool[i];
+      if (it && it.id === id) return it;
     }
     return null;
   }
 
-  // -------- Main --------
+  // ---------- Main ----------
   (function main() {
-    var id = getId();
-    if (!id) { showError("Fehler beim Laden der Karte."); return; }
+    var cardId = getIdFromQuery();
+    if (!cardId) { showError("Fehler beim Laden der Karte."); return; }
 
     fetchFirstOk(CANDIDATES)
       .then(function (json) {
-        var card = findById(json, id);
+        var card = findById(json, cardId);
         if (!card) { showError("Karte nicht gefunden."); return; }
 
-        var title  = card.title || card.name || card.player || card.spieler || "Karte";
-        var series = card.series || card.set || card.set_id || card.setId || card.franchise || "";
-        var desc   = card.description || card.beschreibung || "";
-        var price  = (card.price !== undefined ? card.price : card.preis);
-        var trend  = (card.trend !== undefined ? card.trend : card.preis_trend);
+        var title   = card.title || card.name || card.player || card.spieler || "Karte";
+        var series  = card.series || card.set || card.set_id || card.setId || card.franchise || "";
+        var desc    = card.description || card.beschreibung || "";
+        var price   = (card.price !== undefined ? card.price : card.preis);
+        var trend   = (card.trend !== undefined ? card.trend : card.preis_trend);
         var limited = (card.limited !== undefined ? card.limited : card.limitierung);
 
         setText("card-title", title);
@@ -138,6 +149,8 @@
           img.alt = title;
         }
       })
-      .catch(function () { showError("Fehler beim Laden der Karte."); });
+      .catch(function () {
+        showError("Fehler beim Laden der Karte.");
+      });
   })();
 })();
