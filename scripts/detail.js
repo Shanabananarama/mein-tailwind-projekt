@@ -12,7 +12,6 @@
     if (el) el.textContent = value != null && value !== "" ? String(value) : "—";
   }
   function showError(message) {
-    // Zeigt eine große, gut sichtbare Fehlermeldung
     const host = document.getElementById("detail-root") || document.body;
     const box = document.createElement("div");
     box.style.color = "#d00";
@@ -28,25 +27,33 @@
     const params = new window.URLSearchParams(window.location.search || "");
     cardId = params.get("id");
   } catch (_) {
-    // Fallback – sollte eigentlich nie passieren
     cardId = null;
   }
-
-  // ---- validate id ---------------------------------------------------------
   if (!cardId) {
     showError("Fehler beim Laden der Karte (keine ID übergeben).");
     return;
   }
 
-  // ---- data source (RELATIV, kein führender Slash!) -----------------------
-  const SOURCE = "api/mocks/cards_page_1.json";
+  // ---- data sources (RELATIV, mit Fallback) --------------------------------
+  const SOURCES = [
+    "api/mocks/cards_page_1.json", // bevorzugt (unter /api/…)
+    "mocks/cards_page_1.json",     // Fallback (direkt unter /mocks/…)
+  ];
+
+  function fetchFirstOk(urls) {
+    // Versucht nacheinander mehrere URLs, gibt die erste erfolgreiche Response zurück
+    return urls.reduce((chain, url) => {
+      return chain.catch(() =>
+        fetch(url, { cache: "no-store" }).then((r) => {
+          if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+          return r.json();
+        })
+      );
+    }, Promise.reject(new Error("start")));
+  }
 
   // ---- load + render -------------------------------------------------------
-  fetch(SOURCE, { cache: "no-store" })
-    .then((r) => {
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json();
-    })
+  fetchFirstOk(SOURCES)
     .then((data) => {
       const items = Array.isArray(data?.items) ? data.items : data;
       const card =
