@@ -1,87 +1,110 @@
 /* eslint-env browser */
-/* global URL, URLSearchParams */
 
 (function () {
   "use strict";
 
-  // UI-Helfer
-  function showError(msg) {
-    const wrap = document.getElementById("errorWrap");
-    const out = document.getElementById("error");
-    if (wrap && out) {
-      out.textContent = msg || "Fehler beim Laden der Karte.";
-      wrap.classList.remove("hidden");
+  // UI-Refs
+  const elError = document.getElementById("error");
+  const elCard = document.getElementById("card");
+  const elDebug = document.getElementById("debug");
+
+  const els = {
+    title: document.getElementById("title"),
+    cid: document.getElementById("cid"),
+    setid: document.getElementById("setid"),
+    player: document.getElementById("player"),
+    franchise: document.getElementById("franchise"),
+    number: document.getElementById("number"),
+    variant: document.getElementById("variant"),
+    rarity: document.getElementById("rarity")
+  };
+
+  function show(el) {
+    if (el.classList.contains("hidden")) el.classList.remove("hidden");
+  }
+  function hide(el) {
+    if (!el.classList.contains("hidden")) el.classList.add("hidden");
+  }
+  function fail(msg, debug) {
+    elError.textContent = msg;
+    show(elError);
+    if (debug) {
+      elDebug.textContent = debug;
+      show(elDebug);
     }
-    console.error("[detail]", msg);
+    hide(elCard);
   }
 
-  function qs(id) {
-    return document.getElementById(id);
+  function success() {
+    hide(elError);
+    hide(elDebug);
+    show(elCard);
+  }
+
+  // Sichere Pfadauflösung relativ zu /detail.html
+  function apiUrl(relativePath) {
+    // detail.html liegt im Repo-Root (GitHub Pages: /mein-tailwind-projekt/)
+    const base = window.location.href.replace(/[^/]+$/, "");
+    return new URL(relativePath, base).toString();
   }
 
   async function main() {
     try {
-      // 1) ID aus URL holen (?id=...)
-      const search = new URL(window.location.href).searchParams;
-      const id = search.get("id");
+      // 1) id aus Query
+      const params = new window.URLSearchParams(window.location.search);
+      const id = (params.get("id") || "").trim();
       if (!id) {
-        showError("Keine Karten-ID in der URL.");
+        fail("Fehler: Keine Karten-ID in der URL (?id=...) gefunden.");
         return;
       }
 
-      // 2) Quelle **exakt** wie auf der Kartenliste
-      //    -> api/mocks/cards_page_1.json (relativ, mit sicherer Auflösung)
-      const dataUrl = new URL("api/mocks/cards_page_1.json", document.baseURI);
-
-      // 3) Laden
-      const res = await fetch(dataUrl.toString(), { cache: "no-store" });
+      // 2) JSON laden (gleicher Pfad wie auf cards.html)
+      const src = apiUrl("api/mocks/cards_page_1.json");
+      const res = await fetch(src, { cache: "no-store" });
       if (!res.ok) {
-        showError("HTTP " + res.status + " beim Laden der Daten.");
+        fail("Fehler: Quelle konnte nicht geladen werden.", `HTTP ${res.status} ${res.statusText}\nURL: ${src}`);
+        return;
+      }
+      const data = await res.json();
+
+      // 3) Datensatz-Struktur robust handhaben:
+      //    Erwarte entweder { items: [...] } oder direkt ein Array
+      const list = Array.isArray(data) ? data : Array.isArray(data.items) ? data.items : [];
+      if (!list.length) {
+        fail("Fehler: Die Datenquelle enthält keine Karten.", JSON.stringify(data, null, 2));
         return;
       }
 
-      const json = await res.json();
-
-      // 4) Karten-Array robust extrahieren
-      const cards = Array.isArray(json) ? json : (Array.isArray(json.cards) ? json.cards : []);
-      if (cards.length === 0) {
-        showError("Keine Karten in der Datenquelle gefunden.");
-        return;
-      }
-
-      // 5) Karte suchen
-      const card = cards.find((c) => c && c.id === id);
+      // 4) Karte nach ID finden
+      const card = list.find((c) => (c && (c.id || c.card_id)) === id);
       if (!card) {
-        showError("Karte mit ID \"" + id + "\" nicht gefunden.");
+        const available = list.slice(0, 20).map((c) => c && (c.id || c.card_id)).filter(Boolean);
+        fail(`Karte mit ID „${id}” wurde nicht gefunden.`, `Verfügbare IDs (Auszug):\n${available.join("\n")}`);
         return;
       }
 
-      // 6) Rendern (einfach & robust)
-      if (qs("cardTitle")) qs("cardTitle").textContent = card.name || "—";
-      if (qs("cardFranchise")) qs("cardFranchise").textContent = card.franchise || "—";
-      if (qs("cardId")) qs("cardId").textContent = card.id || "—";
-      if (qs("cardVariant")) qs("cardVariant").textContent = card.variant || "—";
-      if (qs("cardRarity")) qs("cardRarity").textContent = card.rarity || "—";
+      // 5) Felder abbilden (robust, mit Fallbacks)
+      els.title.textContent = [card.player_name || card.player || "—", card.team || card.franchise || ""]
+        .filter(Boolean)
+        .join(" – ");
 
-      // Bild optional
-      if (qs("cardImage")) {
-        const img = qs("cardImage");
-        if (card.image) {
-          img.src = card.image;
-          img.alt = card.name || "Kartenbild";
-          img.classList.remove("hidden");
-        } else {
-          img.classList.add("hidden");
-        }
-      }
+      els.cid.textContent = card.id || card.card_id || "—";
+      els.setid.textContent = card.set_id || card.set || "—";
+      els.player.textContent = card.player_name || card.player || "—";
+      els.franchise.textContent = card.team || card.franchise || "—";
+      els.number.textContent = String(card.number || card.no || "—");
+      els.variant.textContent = card.variant || "—";
+      els.rarity.textContent = card.rarity || "—";
 
-      // Erfolgsfall: Fehlermeldung sicher verbergen (falls vorhanden)
-      const wrap = document.getElementById("errorWrap");
-      if (wrap) wrap.classList.add("hidden");
+      success();
     } catch (err) {
-      showError("Unerwarteter Fehler.");
+      fail("Unerwarteter Fehler beim Laden der Karte.", String(err && err.stack ? err.stack : err));
     }
   }
 
-  document.addEventListener("DOMContentLoaded", main);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", main);
+  } else {
+    main();
+  }
 })();
