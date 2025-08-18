@@ -1,89 +1,87 @@
 /* eslint-env browser */
+/* global URL, URLSearchParams */
+
 (function () {
   "use strict";
 
-  // Projekt-Root auf GitHub Pages erkennen (lokal = "/")
-  const BASE =
-    window.location.pathname.includes("/mein-tailwind-projekt/")
-      ? "/mein-tailwind-projekt/"
-      : "/";
-
-  const DATA_URL = `${BASE}api/mocks/cards_page_1.json`;
-
-  const $ = (sel) => document.querySelector(sel);
-
-  const errorEl =
-    $("#detail-error") || document.querySelector("[data-error]") || null;
-
-  const showError = (msg) => {
-    if (errorEl) {
-      errorEl.textContent = msg;
-      errorEl.classList.remove("hidden");
+  // UI-Helfer
+  function showError(msg) {
+    const wrap = document.getElementById("errorWrap");
+    const out = document.getElementById("error");
+    if (wrap && out) {
+      out.textContent = msg || "Fehler beim Laden der Karte.";
+      wrap.classList.remove("hidden");
     }
-  };
+    console.error("[detail]", msg);
+  }
 
-  const hideError = () => {
-    if (errorEl) errorEl.classList.add("hidden");
-  };
+  function qs(id) {
+    return document.getElementById(id);
+  }
 
-  async function run() {
+  async function main() {
     try {
-      // Query-Param id auslesen – nur Browser-APIs via window.*
-      const params = new window.URLSearchParams(window.location.search);
-      const id = params.get("id");
-      if (!id) throw new Error("missing id");
+      // 1) ID aus URL holen (?id=...)
+      const search = new URL(window.location.href).searchParams;
+      const id = search.get("id");
+      if (!id) {
+        showError("Keine Karten-ID in der URL.");
+        return;
+      }
 
-      // Daten holen
-      const res = await window.fetch(DATA_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error(`fetch ${res.status}`);
+      // 2) Quelle **exakt** wie auf der Kartenliste
+      //    -> api/mocks/cards_page_1.json (relativ, mit sicherer Auflösung)
+      const dataUrl = new URL("api/mocks/cards_page_1.json", document.baseURI);
+
+      // 3) Laden
+      const res = await fetch(dataUrl.toString(), { cache: "no-store" });
+      if (!res.ok) {
+        showError("HTTP " + res.status + " beim Laden der Daten.");
+        return;
+      }
 
       const json = await res.json();
 
-      // Kartenliste flexibel bestimmen
-      const list = Array.isArray(json)
-        ? json
-        : Array.isArray(json.cards)
-        ? json.cards
-        : Array.isArray(json.items)
-        ? json.items
-        : [];
+      // 4) Karten-Array robust extrahieren
+      const cards = Array.isArray(json) ? json : (Array.isArray(json.cards) ? json.cards : []);
+      if (cards.length === 0) {
+        showError("Keine Karten in der Datenquelle gefunden.");
+        return;
+      }
 
-      const card =
-        list.find((c) => c && (c.id === id || c.ID === id)) || null;
-      if (!card) throw new Error("card not found");
+      // 5) Karte suchen
+      const card = cards.find((c) => c && c.id === id);
+      if (!card) {
+        showError("Karte mit ID \"" + id + "\" nicht gefunden.");
+        return;
+      }
 
-      // Fehler ausblenden
-      hideError();
+      // 6) Rendern (einfach & robust)
+      if (qs("cardTitle")) qs("cardTitle").textContent = card.name || "—";
+      if (qs("cardFranchise")) qs("cardFranchise").textContent = card.franchise || "—";
+      if (qs("cardId")) qs("cardId").textContent = card.id || "—";
+      if (qs("cardVariant")) qs("cardVariant").textContent = card.variant || "—";
+      if (qs("cardRarity")) qs("cardRarity").textContent = card.rarity || "—";
 
-      // Felder befüllen – nur, wenn vorhanden
-      const setText = (sel, val) => {
-        const el = $(sel);
-        if (el) el.textContent = String(val ?? "—");
-      };
-      const setSrc = (sel, src) => {
-        const el = $(sel);
-        if (el && src) el.src = src;
-      };
+      // Bild optional
+      if (qs("cardImage")) {
+        const img = qs("cardImage");
+        if (card.image) {
+          img.src = card.image;
+          img.alt = card.name || "Kartenbild";
+          img.classList.remove("hidden");
+        } else {
+          img.classList.add("hidden");
+        }
+      }
 
-      setText("#card-title", card.player || card.title || card.name || "—");
-      setText(
-        "#card-series",
-        card.franchise || card.team || card.series || "—"
-      );
-      setText("#card-description", card.variant || card.description || "—");
-      setText("#card-price", card.price ? `${card.price} €` : "—");
-      setText("#card-trend", card.trend ? `${card.trend} €` : "—");
-      setText("#card-limited", card.rarity || card.limited || "—");
-      setSrc("#card-image", card.image || card.img || "");
-    } catch (_e) {
-      // Keine Console-Ausgabe gewünscht – nur UI-Fehler anzeigen
-      showError("Fehler beim Laden der Karte.");
+      // Erfolgsfall: Fehlermeldung sicher verbergen (falls vorhanden)
+      const wrap = document.getElementById("errorWrap");
+      if (wrap) wrap.classList.add("hidden");
+    } catch (err) {
+      showError("Unerwarteter Fehler.");
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", run);
-  } else {
-    run();
-  }
+  document.addEventListener("DOMContentLoaded", main);
 })();
