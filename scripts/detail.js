@@ -1,76 +1,89 @@
 /* eslint-env browser */
-/* global URLSearchParams, location */
+(function () {
+  "use strict";
 
-(() => {
-  // UI-Helfer
+  // Projekt-Root auf GitHub Pages erkennen (lokal = "/")
+  const BASE =
+    window.location.pathname.includes("/mein-tailwind-projekt/")
+      ? "/mein-tailwind-projekt/"
+      : "/";
+
+  const DATA_URL = `${BASE}api/mocks/cards_page_1.json`;
+
+  const $ = (sel) => document.querySelector(sel);
+
+  const errorEl =
+    $("#detail-error") || document.querySelector("[data-error]") || null;
+
   const showError = (msg) => {
-    const el = document.getElementById('error');
-    if (el) {
-      el.textContent = msg;
-      el.classList.remove('hidden');
-    } else {
-      // Fallback falls kein dediziertes Error-Element existiert
-      alert(msg); // eslint-disable-line no-alert
+    if (errorEl) {
+      errorEl.textContent = msg;
+      errorEl.classList.remove("hidden");
     }
   };
 
-  const setText = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
+  const hideError = () => {
+    if (errorEl) errorEl.classList.add("hidden");
   };
 
-  try {
-    // 1) ID aus Query lesen (robust + ESLint-safe)
-    const params = new URLSearchParams(window.location.search || location.search);
-    const cardId = params.get('id');
+  async function run() {
+    try {
+      // Query-Param id auslesen – nur Browser-APIs via window.*
+      const params = new window.URLSearchParams(window.location.search);
+      const id = params.get("id");
+      if (!id) throw new Error("missing id");
 
-    if (!cardId) {
-      showError('Es wurde keine Karten-ID übergeben (?id=...).');
-      return;
+      // Daten holen
+      const res = await window.fetch(DATA_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`fetch ${res.status}`);
+
+      const json = await res.json();
+
+      // Kartenliste flexibel bestimmen
+      const list = Array.isArray(json)
+        ? json
+        : Array.isArray(json.cards)
+        ? json.cards
+        : Array.isArray(json.items)
+        ? json.items
+        : [];
+
+      const card =
+        list.find((c) => c && (c.id === id || c.ID === id)) || null;
+      if (!card) throw new Error("card not found");
+
+      // Fehler ausblenden
+      hideError();
+
+      // Felder befüllen – nur, wenn vorhanden
+      const setText = (sel, val) => {
+        const el = $(sel);
+        if (el) el.textContent = String(val ?? "—");
+      };
+      const setSrc = (sel, src) => {
+        const el = $(sel);
+        if (el && src) el.src = src;
+      };
+
+      setText("#card-title", card.player || card.title || card.name || "—");
+      setText(
+        "#card-series",
+        card.franchise || card.team || card.series || "—"
+      );
+      setText("#card-description", card.variant || card.description || "—");
+      setText("#card-price", card.price ? `${card.price} €` : "—");
+      setText("#card-trend", card.trend ? `${card.trend} €` : "—");
+      setText("#card-limited", card.rarity || card.limited || "—");
+      setSrc("#card-image", card.image || card.img || "");
+    } catch (_e) {
+      // Keine Console-Ausgabe gewünscht – nur UI-Fehler anzeigen
+      showError("Fehler beim Laden der Karte.");
     }
+  }
 
-    // 2) Datenquelle robust relativ zur aktuellen Seite auflösen
-    //    -> funktioniert auf GitHub Pages unabhängig vom Repo-Subpfad
-    const dataUrl = new URL('./api/mocks/cards_page_1.json', window.location.href).toString();
-
-    // 3) Daten laden
-    fetch(dataUrl, { cache: 'no-store' })
-      .then(async (res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status} beim Laden der Daten`);
-        }
-        return res.json();
-      })
-      .then((json) => {
-        const items = Array.isArray(json?.items) ? json.items : json;
-        if (!Array.isArray(items)) {
-          throw new Error('Unerwartetes Datenformat (keine items-Liste)');
-        }
-
-        const card = items.find((it) => it?.id === cardId);
-        if (!card) {
-          throw new Error(`Keine Karte mit ID „${cardId}“ gefunden.`);
-        }
-
-        // 4) UI füllen – IDs bitte an Dein Markup anpassen
-        setText('card-title', card.player || card.title || '—');
-        setText('card-series', card.franchise || card.series || '—');
-        setText('card-description', card.description || '—');
-        setText('card-price', card.price != null ? String(card.price) : '—');
-        setText('card-trend', card.trend != null ? String(card.trend) : '—');
-        setText('card-limited', card.rarity || card.variant || '—');
-
-        const imgEl = document.getElementById('card-image');
-        if (imgEl && card.image) imgEl.src = card.image;
-
-        // Fehlerhinweis ausblenden, falls vorhanden
-        const errEl = document.getElementById('error');
-        if (errEl) errEl.classList.add('hidden');
-      })
-      .catch((err) => {
-        showError(`Fehler beim Laden der Karte: ${err.message}`);
-      });
-  } catch (err) {
-    showError(`Fehler beim Initialisieren: ${err.message}`);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", run);
+  } else {
+    run();
   }
 })();
