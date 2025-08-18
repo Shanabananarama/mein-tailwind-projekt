@@ -2,43 +2,44 @@
 "use strict";
 
 /**
- * Robustes Detail-Rendering ohne globale URL/URLSearchParams Abhängigkeiten.
- * - Liest ?id=… manuell aus window.location.search (nur window.* verwenden -> lint-safe)
- * - Lädt die gleiche Quelle wie die Kartenübersicht: api/mocks/cards_page_1.json
- * - Handhabt sowohl { cards: [...] } als auch ein reines Array
- * - Rendert saubere Fehlermeldung, wenn Karte nicht gefunden / Fetch-Fehler
+ * Robustes Detail-Rendering ohne URL/URLSearchParams.
+ * - Liest ?id=… manuell aus window.location.search
+ * - Lädt Daten aus api/mocks/cards_page_1.json
+ * - Fehlertolerant für unterschiedliche Feldnamen
  */
 
 const DATA_URL = "api/mocks/cards_page_1.json";
 
-// kleine DOM-Helper
+// DOM-Helper
 const $ = (sel) => document.querySelector(sel);
-const detailsBox = $("#card-details");
 
-// defensive Fallback: existierendes Fehler-Template überschreiben
-function showError(message) {
-  if (detailsBox) {
-    detailsBox.innerHTML =
-      '<div class="text-red-600 text-xl flex items-center gap-2">' +
-      "<span aria-hidden>❌</span>" +
-      `<span>${message}</span>` +
-      "</div>";
-  } else {
-    // falls Struktur anders ist, wenigstens etwas anzeigen
-    // eslint-disable-next-line no-alert
-    alert(message);
+function provideHostContainer() {
+  let box = $("#card-details");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "card-details";
+    box.className = "p-4";
+    document.body.appendChild(box);
   }
+  return box;
+}
+
+function showError(message) {
+  const box = provideHostContainer();
+  box.innerHTML =
+    '<div class="text-red-600 text-xl flex items-center gap-2">' +
+    "<span aria-hidden>❌</span>" +
+    `<span>${message}</span>` +
+    "</div>";
 }
 
 function getIdFromSearch() {
-  // "?id=card_messi_tc&foo=bar" -> "id=card_messi_tc&foo=bar"
   const raw = (window.location && window.location.search) || "";
   const query = raw.startsWith("?") ? raw.slice(1) : raw;
   if (!query) return "";
-
-  const pairs = query.split("&");
-  for (let i = 0; i < pairs.length; i += 1) {
-    const kv = pairs[i].split("=");
+  const parts = query.split("&");
+  for (let i = 0; i < parts.length; i += 1) {
+    const kv = parts[i].split("=");
     const key = decodeURIComponent(kv[0] || "");
     if (key === "id") {
       return decodeURIComponent(kv[1] || "");
@@ -80,7 +81,6 @@ async function render() {
       return;
     }
 
-    // Versuche, unterschiedliche Feldnamen robust abzudecken
     const title =
       card.title ||
       card.name ||
@@ -96,18 +96,12 @@ async function render() {
       card.franchise ||
       "";
 
-    const desc =
-      card.description ||
-      card.beschreibung ||
-      "";
+    const desc = card.description || card.beschreibung || "";
 
     const price = card.price != null ? card.price : card.preis;
     const trend = card.trend != null ? card.trend : card.preis_trend;
-    const limited =
-      card.limited != null ? card.limited : card.limitierung;
+    const limited = card.limited != null ? card.limited : card.limitierung;
 
-    // Ziel-IDs gemäß vorhandener detail.html (#pages & root) abdecken:
-    // #card-title, #card-series, #card-description, #card-price, #card-trend, #card-limited, #card-image
     setText("card-title", title);
     setText("card-series", series);
     setText("card-description", desc);
@@ -127,5 +121,4 @@ async function render() {
   }
 }
 
-// Start
 render();
