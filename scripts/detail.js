@@ -1,89 +1,68 @@
-/* eslint-env browser */
-(function () {
-  "use strict";
+// scripts/detail.js (ES-Modul, keine externen Imports)
 
-  // Projekt-Root auf GitHub Pages erkennen (lokal = "/")
-  const BASE =
-    window.location.pathname.includes("/mein-tailwind-projekt/")
-      ? "/mein-tailwind-projekt/"
-      : "/";
+const errorEl   = document.getElementById("detail-error");
+const imgEl     = document.getElementById("card-image");
+const titleEl   = document.getElementById("card-title");
+const seriesEl  = document.getElementById("card-series");
+const descEl    = document.getElementById("card-description");
+const priceEl   = document.getElementById("card-price");
+const trendEl   = document.getElementById("card-trend");
+const limitedEl = document.getElementById("card-limited");
 
-  const DATA_URL = `${BASE}api/mocks/cards_page_1.json`;
+function showError() {
+  if (errorEl) errorEl.classList.remove("hidden");
+}
+function hideError() {
+  if (errorEl) errorEl.classList.add("hidden");
+}
 
-  const $ = (sel) => document.querySelector(sel);
+// ID aus URL holen
+const params = new URLSearchParams(window.location.search);
+const cardId = params.get("id");
+if (!cardId) {
+  showError();
+  throw new Error("Missing ?id=");
+}
 
-  const errorEl =
-    $("#detail-error") || document.querySelector("[data-error]") || null;
+// gleiche Datenquelle wie auf der Kartenliste
+const dataUrl = new URL("api/mocks/cards_page_1.json", window.location.href);
 
-  const showError = (msg) => {
-    if (errorEl) {
-      errorEl.textContent = msg;
-      errorEl.classList.remove("hidden");
+fetch(dataUrl.toString(), { cache: "no-store" })
+  .then((r) => {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  })
+  .then((json) => {
+    // Datenstruktur robust handhaben
+    const list = Array.isArray(json) ? json : (json.cards || json.items || []);
+    const card = list.find((c) => c && c.id === cardId);
+
+    if (!card) {
+      showError();
+      return;
     }
-  };
 
-  const hideError = () => {
-    if (errorEl) errorEl.classList.add("hidden");
-  };
+    hideError();
 
-  async function run() {
-    try {
-      // Query-Param id auslesen – nur Browser-APIs via window.*
-      const params = new window.URLSearchParams(window.location.search);
-      const id = params.get("id");
-      if (!id) throw new Error("missing id");
+    titleEl.textContent   = card.player || card.title || card.name || "—";
+    seriesEl.textContent  = card.franchise || card.team || card.series || "—";
+    descEl.textContent    = card.variant || card.description || card.rarity || "—";
+    if (priceEl)  priceEl.textContent  = card.price ?? "—";
+    if (trendEl)  trendEl.textContent  = card.trend ?? "—";
+    if (limitedEl) limitedEl.textContent = (card.limited != null ? String(card.limited) : (card.rarity || "—"));
 
-      // Daten holen
-      const res = await window.fetch(DATA_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error(`fetch ${res.status}`);
-
-      const json = await res.json();
-
-      // Kartenliste flexibel bestimmen
-      const list = Array.isArray(json)
-        ? json
-        : Array.isArray(json.cards)
-        ? json.cards
-        : Array.isArray(json.items)
-        ? json.items
-        : [];
-
-      const card =
-        list.find((c) => c && (c.id === id || c.ID === id)) || null;
-      if (!card) throw new Error("card not found");
-
-      // Fehler ausblenden
-      hideError();
-
-      // Felder befüllen – nur, wenn vorhanden
-      const setText = (sel, val) => {
-        const el = $(sel);
-        if (el) el.textContent = String(val ?? "—");
-      };
-      const setSrc = (sel, src) => {
-        const el = $(sel);
-        if (el && src) el.src = src;
-      };
-
-      setText("#card-title", card.player || card.title || card.name || "—");
-      setText(
-        "#card-series",
-        card.franchise || card.team || card.series || "—"
-      );
-      setText("#card-description", card.variant || card.description || "—");
-      setText("#card-price", card.price ? `${card.price} €` : "—");
-      setText("#card-trend", card.trend ? `${card.trend} €` : "—");
-      setText("#card-limited", card.rarity || card.limited || "—");
-      setSrc("#card-image", card.image || card.img || "");
-    } catch (_e) {
-      // Keine Console-Ausgabe gewünscht – nur UI-Fehler anzeigen
-      showError("Fehler beim Laden der Karte.");
+    if (imgEl) {
+      if (card.image) {
+        imgEl.src = card.image;
+        imgEl.alt = titleEl.textContent;
+      } else {
+        // wenn kein Bild vorhanden, Platzhalter verstecken
+        imgEl.removeAttribute("src");
+        imgEl.classList.add("opacity-0");
+      }
     }
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", run);
-  } else {
-    run();
-  }
-})();
+  })
+  .catch((err) => {
+    console.error(err);
+    showError();
+  });
