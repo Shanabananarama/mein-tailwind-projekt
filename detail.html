@@ -1,54 +1,40 @@
 <!doctype html>
 <html lang="de">
   <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Kartendetail</title>
     <link href="style/output.css" rel="stylesheet" />
+    <script type="module" src="scripts/detail.js" defer></script>
   </head>
-  <body class="bg-gray-100 text-gray-900">
-    <div class="max-w-5xl mx-auto px-6 py-8">
-      <a href="index.html" class="text-indigo-600 hover:underline text-lg">← Zurück</a>
-      <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 mt-6 mb-8">Kartendetail</h1>
 
-      <!-- Fehlermeldung -->
-      <div
-        id="detail-error"
-        class="hidden text-red-600 text-2xl font-semibold flex items-center gap-3"
-      >
-        <span class="text-3xl">❌</span>
-        <span>Fehler beim Laden der Karte.</span>
-      </div>
+  <body class="bg-slate-50 text-slate-900">
+    <main class="max-w-5xl mx-auto px-6 py-10">
+      <header class="flex items-center justify-between mb-8">
+        <a href="index.html" class="text-indigo-600 hover:underline text-xl">← Zurück</a>
+        <h1 class="text-3xl font-extrabold tracking-tight">Kartendetail</h1>
+        <span class="opacity-0">.</span>
+      </header>
 
-      <!-- Karte -->
-      <div
-        id="card-details"
-        class="mt-6 grid gap-8 md:grid-cols-2 bg-white rounded-2xl shadow p-6"
-      >
-        <div class="flex items-center justify-center">
-          <img
-            id="card-image"
-            src=""
-            alt="Kartenbild"
-            class="rounded-xl shadow max-h-96 object-contain"
-          />
+      <!-- Fehlerbereich -->
+      <div id="error" class="hidden rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700"></div>
+
+      <!-- Detailkarte -->
+      <article id="card" class="hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 p-6">
+        <h2 id="title" class="text-2xl font-bold mb-2">—</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-2">
+          <div class="text-slate-600">ID</div><div id="cid" class="font-mono">—</div>
+          <div class="text-slate-600">Set-ID</div><div id="setid">—</div>
+          <div class="text-slate-600">Spieler</div><div id="player">—</div>
+          <div class="text-slate-600">Franchise</div><div id="franchise">—</div>
+          <div class="text-slate-600">Nummer</div><div id="number">—</div>
+          <div class="text-slate-600">Variante</div><div id="variant">—</div>
+          <div class="text-slate-600">Seltenheit</div><div id="rarity">—</div>
         </div>
+      </article>
 
-        <div class="space-y-3">
-          <h2 id="card-title" class="text-2xl font-bold">—</h2>
-          <p id="card-series" class="text-slate-600">—</p>
-          <p id="card-description" class="italic text-slate-500">—</p>
-
-          <div class="pt-4 grid grid-cols-2 gap-4">
-            <div class="text-lg">💰 Preis: <span id="card-price" class="font-semibold">—</span></div>
-            <div class="text-lg text-emerald-700">📊 Trend: <span id="card-trend" class="font-semibold">—</span></div>
-            <div class="text-lg col-span-2">Limitierung / Seltenheit: <span id="card-limited" class="font-semibold">—</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- WICHTIG: als ES-Modul laden -->
-    <script type="module" src="scripts/detail.js"></script>
+      <!-- Debug-Ausgabe (nur wenn etwas schiefgeht) -->
+      <pre id="debug" class="hidden mt-6 overflow-auto rounded-lg bg-slate-900 p-4 text-slate-100 text-sm"></pre>
+    </main>
   </body>
 </html>
