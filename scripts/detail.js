@@ -1,148 +1,171 @@
 /* eslint-env browser */
+/* global window, document, fetch */
 
 (function () {
   "use strict";
 
-  // UI-Referenzen
-  var elError = document.getElementById("error");
-  var elCard = document.getElementById("card");
-  var elDebug = document.getElementById("debug");
-
-  var els = {
-    title: document.getElementById("title"),
-    cid: document.getElementById("cid"),
-    setid: document.getElementById("setid"),
-    player: document.getElementById("player"),
-    franchise: document.getElementById("franchise"),
-    number: document.getElementById("number"),
-    variant: document.getElementById("variant"),
-    rarity: document.getElementById("rarity")
+  // ---------- tiny DOM helpers ----------
+  const $ = (sel) => document.querySelector(sel);
+  const el = (tag, cls, html) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (html != null) n.innerHTML = html;
+    return n;
   };
 
-  function show(el) {
-    if (el && el.classList && el.classList.contains("hidden")) {
-      el.classList.remove("hidden");
+  // ---------- mount target (robust) ----------
+  const mount =
+    $("#card-details") ||
+    $("#app") ||
+    (function () {
+      const m = document.createElement("div");
+      m.id = "card-details";
+      document.body.appendChild(m);
+      return m;
+    })();
+
+  // ---------- error UI ----------
+  const showError = (msg, src) => {
+    mount.innerHTML = "";
+    const wrap = el("div", "mx-auto max-w-5xl p-6");
+    const row = el("div", "text-red-600 text-2xl flex items-start gap-3");
+    row.appendChild(el("span", "select-none", "❌"));
+    row.appendChild(el("p", "", msg));
+    wrap.appendChild(row);
+    if (src) {
+      wrap.appendChild(
+        el("p", "mt-3 text-sm text-gray-500", "Quelle: " + src)
+      );
     }
+    mount.appendChild(wrap);
+  };
+
+  // ---------- URL param ----------
+  const sp = new URLSearchParams(window.location.search);
+  const cardId = sp.get("id");
+  if (!cardId) {
+    showError("Fehler beim Laden der Karte. (Keine ID übergeben)");
+    return;
   }
 
-  function hide(el) {
-    if (el && el.classList && !el.classList.contains("hidden")) {
-      el.classList.add("hidden");
-    }
-  }
+  // ---------- Datenquellen-Kandidaten (robust für Pages / lokal) ----------
+  const base = document.baseURI; // Achtung: auf GH Pages z.B. .../mein-tailwind-projekt/detail.html
+  const candidates = [
+    new URL("api/mocks/cards_page_1.json", base).href,
+    new URL("mocks/cards_page_1.json", base).href,
+    // Fallbacks (absolut), falls die Seite nicht unter dem Repo-Präfix läuft
+    "/mein-tailwind-projekt/api/mocks/cards_page_1.json",
+    "/mein-tailwind-projekt/mocks/cards_page_1.json",
+  ];
 
-  function fail(msg, debug) {
-    if (elError) {
-      elError.textContent = msg;
-      show(elError);
-    }
-    if (debug && elDebug) {
-      elDebug.textContent = debug;
-      show(elDebug);
-    }
-    hide(elCard);
-  }
+  // ---------- fetch helper ----------
+  const fetchJson = async (url) => {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status + " – " + res.statusText);
+    return res.json();
+  };
 
-  function success() {
-    hide(elError);
-    hide(elDebug);
-    show(elCard);
-  }
+  // ---------- normalize ----------
+  const normalize = (json) => {
+    if (Array.isArray(json)) return json;
+    if (json && Array.isArray(json.cards)) return json.cards;
+    if (json && Array.isArray(json.data)) return json.data;
+    if (json && json.items && Array.isArray(json.items)) return json.items;
+    return [];
+  };
 
-  function getIdFromQuery() {
-    var search = window.location.search || "";
+  // ---------- render ----------
+  const render = (c) => {
+    mount.innerHTML = "";
+
+    const grid = el("div", "mx-auto max-w-6xl p-6 grid md:grid-cols-3 gap-6");
+
+    const imgBox = el(
+      "div",
+      "md:col-span-1 flex items-center justify-center"
+    );
+    const img = el("img", "rounded-lg shadow max-h-96 object-contain");
+    img.alt = c.player || c.title || "Karte";
+    img.src =
+      c.image ||
+      c.img ||
+      "data:image/svg+xml;utf8," +
+        encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><rect width="100%" height="100%" fill="#f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#9ca3af">Kein Bild</text></svg>'
+        );
+    imgBox.appendChild(img);
+
+    const box = el("div", "md:col-span-2 bg-white rounded-lg shadow p-6");
+    const h = el(
+      "h2",
+      "text-2xl font-bold mb-4",
+      c.player || c.title || "Unbekannte Karte"
+    );
+    const dl = el("dl", "grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3");
+    const row = (dt, dd) => {
+      const r = el("div", "flex flex-col");
+      r.appendChild(el("dt", "text-sm text-gray-500", dt));
+      r.appendChild(el("dd", "text-base text-gray-900", dd ?? "—"));
+      return r;
+    };
+
+    dl.appendChild(row("ID", c.id));
+    dl.appendChild(row("Set-ID", c.set || c.set_id || c.setId));
+    dl.appendChild(row("Spieler", c.player || c.title));
+    dl.appendChild(row("Franchise", c.franchise || c.team || c.club));
+    dl.appendChild(row("Nummer", c.number || c.no));
+    dl.appendChild(row("Variante", c.variant));
+    dl.appendChild(row("Seltenheit", c.rarity));
+
+    box.appendChild(h);
+    box.appendChild(dl);
+
+    grid.appendChild(imgBox);
+    grid.appendChild(box);
+    mount.appendChild(grid);
+  };
+
+  // ---------- run ----------
+  (async () => {
+    let lastUrl = "";
     try {
-      var params = new window.URLSearchParams(search);
-      var id = params.get("id");
-      return id ? id.trim() : "";
-    } catch (e) {
-      // Fallback: manuelles Parsen
-      if (search.indexOf("?") === 0) {
-        var pairs = search.slice(1).split("&");
-        for (var i = 0; i < pairs.length; i++) {
-          var kv = pairs[i].split("=");
-          if (decodeURIComponent(kv[0]) === "id") {
-            return decodeURIComponent(kv.slice(1).join("=")).trim();
-          }
+      let data = null;
+      for (const url of candidates) {
+        try {
+          lastUrl = url;
+          data = await fetchJson(url);
+          if (data) break;
+        } catch (_) {
+          // nächste Kandidaten-URL probieren
         }
       }
-      return "";
-    }
-  }
-
-  function pick(valA, valB, fallback) {
-    return valA != null && valA !== "" ? valA : (valB != null && valB !== "" ? valB : fallback);
-  }
-
-  async function main() {
-    try {
-      var id = getIdFromQuery();
-      if (!id) {
-        fail("Fehler: Keine Karten-ID in der URL (?id=...) gefunden.");
+      if (!data) {
+        showError("Fehler beim Laden der Karte. (Quelle nicht erreichbar)", lastUrl);
         return;
       }
 
-      // Statischer, relativer Pfad – identisch zur Kartenliste
-      var src = "api/mocks/cards_page_1.json";
-      var res = await fetch(src, { cache: "no-store" });
-      if (!res.ok) {
-        fail("Fehler: Quelle konnte nicht geladen werden.", "HTTP " + res.status + " " + res.statusText + "\nURL: " + src);
-        return;
-      }
-      var data = await res.json();
-
-      // {items:[...]} ODER direkt [...]
-      var list = Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : []);
-      if (!list.length) {
-        fail("Fehler: Die Datenquelle enthält keine Karten.", JSON.stringify(data, null, 2));
+      const cards = normalize(data);
+      if (!cards.length) {
+        showError("Fehler beim Laden der Karte. (Unbekannte Datenstruktur)", lastUrl);
         return;
       }
 
-      // Karte anhand id finden (robust gegenüber Feldnamen)
-      var card = null;
-      for (var i = 0; i < list.length; i++) {
-        var c = list[i] || {};
-        var cid = c.id != null ? c.id : c.card_id;
-        if (cid === id) {
-          card = c;
-          break;
-        }
-      }
-
+      // exakte ID, dann case-insensitive fallback
+      let card = cards.find((c) => c && String(c.id) === String(cardId));
       if (!card) {
-        var ids = [];
-        for (var j = 0; j < list.length && j < 50; j++) {
-          var x = list[j] || {};
-          var xid = x.id != null ? x.id : x.card_id;
-          if (xid != null) ids.push(xid);
-        }
-        fail("Karte mit ID „" + id + "” wurde nicht gefunden.", "Verfügbare IDs (Auszug):\n" + ids.join("\n"));
+        const target = String(cardId).toLowerCase();
+        card = cards.find(
+          (c) => c && c.id && String(c.id).toLowerCase() === target
+        );
+      }
+      if (!card) {
+        showError('Fehler beim Laden der Karte. (ID "' + cardId + '" nicht gefunden)', lastUrl);
         return;
       }
 
-      // Felder zuweisen (robust, mit Fallbacks)
-      var player = pick(card.player_name, card.player, "—");
-      var team = pick(card.team, card.franchise, "");
-      els.title.textContent = team ? (player + " – " + team) : player;
-
-      els.cid.textContent = pick(card.id, card.card_id, "—");
-      els.setid.textContent = pick(card.set_id, card.set, "—");
-      els.player.textContent = player;
-      els.franchise.textContent = pick(card.team, card.franchise, "—");
-      els.number.textContent = String(pick(card.number, card.no, "—"));
-      els.variant.textContent = pick(card.variant, "", "—");
-      els.rarity.textContent = pick(card.rarity, "", "—");
-
-      success();
-    } catch (err) {
-      var msg = (err && err.stack) ? String(err.stack) : String(err);
-      fail("Unerwarteter Fehler beim Laden der Karte.", msg);
+      render(card);
+    } catch (e) {
+      showError("Fehler beim Laden der Karte. (" + e.message + ")", lastUrl);
     }
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", main);
-  } else {
-    main();
-  }
+  })();
 })();
