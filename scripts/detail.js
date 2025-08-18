@@ -1,123 +1,59 @@
-/* eslint-disable no-console */
+document.addEventListener("DOMContentLoaded", async () => {
+  const params = new URLSearchParams(window.location.search);
+  const cardId = params.get("id");
 
-(function () {
-  "use strict";
+  const detailContainer = document.getElementById("detail-container") || document.body;
 
-  const $ = (sel) => document.querySelector(sel);
-
-  function repoBase() {
-    // funktioniert lokal ("/") und auf GitHub Pages ("/mein-tailwind-projekt/")
-    const PATH = window.location.pathname;
-    return PATH.includes("/mein-tailwind-projekt/")
-      ? "/mein-tailwind-projekt/"
-      : "/";
+  if (!cardId) {
+    detailContainer.innerHTML =
+      "<p class='text-red-500 text-lg'>❌ Keine Karten-ID angegeben.</p>";
+    return;
   }
 
-  function makeUrl(relative) {
-    const base = window.location.origin + repoBase();
-    return new window.URL(relative, base).toString();
-  }
+  try {
+    // JSON-Quelle (RAW auf GitHub + Cachebuster)
+    const jsonUrl =
+      "https://raw.githubusercontent.com/Shanabananarama/mein-tailwind-projekt/refs/heads/main/api/mocks/cards_page_1.json?v=" +
+      Date.now();
 
-  function getCardId() {
-    const params = new window.URLSearchParams(window.location.search);
-    return params.get("id");
-  }
+    const res = await fetch(jsonUrl, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-store" },
+    });
 
-  function hideError() {
-    const candidates = [
-      "#error",
-      "#loadError",
-      ".error",
-      '[data-role="load-error"]'
-    ];
-    for (const sel of candidates) {
-      const el = $(sel);
-      if (el) {
-        el.style.display = "none";
-      }
+    if (!res.ok) throw new Error("Netzwerkfehler: " + res.status);
+
+    const data = await res.json();
+
+    // Datensatz finden (Feld "id" muss exakt zur URL ?id=... passen)
+    const card = Array.isArray(data) ? data.find((c) => c.id === cardId) : null;
+
+    if (!card) {
+      detailContainer.innerHTML =
+        "<p class='text-red-500 text-lg'>❌ Karte nicht gefunden.</p>";
+      return;
     }
-  }
 
-  function renderCard(card) {
-    hideError();
+    // Fallbacks
+    const name = card.name || card.title || "Unbenannte Karte";
+    const team = card.team || card.franchise || "";
+    const price = card.price ?? card.current_price ?? "—";
+    const image = card.image || card.img || "";
 
-    const host = $("#card-details") || document.body;
-
-    const title =
-      card.title ||
-      card.name ||
-      card.player ||
-      card.spieler ||
-      "Unbenannte Karte";
-
-    const rows = [
-      ["ID", card.id || card.card_id || "—"],
-      ["Set-ID", card.set_id || card.set || "—"],
-      ["Spieler", card.spieler || card.player || title || "—"],
-      ["Franchise", card.franchise || card.team || card.club || "—"],
-      ["Nummer", card.number || card.nummer || "—"],
-      ["Variante", card.variant || card.variante || "—"],
-      ["Seltenheit", card.rarity || card.seltenheit || "—"]
-    ];
-
-    host.innerHTML = `
-      <div class="bg-white p-6 rounded-lg shadow flex flex-col gap-4 w-full">
-        <h1 class="text-2xl font-bold">${title}</h1>
-        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
-          ${rows
-            .map(
-              ([k, v]) => `
-            <div class="flex flex-col">
-              <dt class="text-gray-500">${k}</dt>
-              <dd class="font-medium">${String(v)}</dd>
-            </div>`
-            )
-            .join("")}
-        </dl>
+    detailContainer.innerHTML = `
+      <div class="max-w-xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+        ${image ? `<img src="${image}" alt="${name}" class="w-full">` : ""}
+        <div class="p-5">
+          <h1 class="text-2xl font-bold mb-1">${name}</h1>
+          ${team ? `<p class="text-gray-600 mb-2">${team}</p>` : ""}
+          <p class="text-gray-800 font-semibold">Preis: ${price} €</p>
+          <p class="text-xs text-gray-400 mt-3">ID: ${cardId}</p>
+        </div>
       </div>
     `;
+  } catch (err) {
+    console.error(err);
+    detailContainer.innerHTML =
+      "<p class='text-red-500 text-lg'>❌ Fehler beim Laden der Karte.</p>";
   }
-
-  function showNotFound(id) {
-    const host = $("#card-details") || document.body;
-    host.innerHTML = `
-      <div class="text-red-600 text-lg font-semibold">Karte mit ID "${id}" nicht gefunden.</div>
-    `;
-  }
-
-  async function load() {
-    try {
-      const id = getCardId();
-      if (!id) {
-        showNotFound("—");
-        return;
-      }
-
-      // GitHub Pages Quelle
-      const url = makeUrl("api/mocks/cards_page_1.json");
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) {
-        throw new Error("HTTP " + res.status);
-      }
-
-      const json = await res.json();
-      const cards = Array.isArray(json)
-        ? json
-        : json.cards || json.items || json.data || json.results || [];
-
-      const card =
-        cards.find((c) => c.id === id || c.card_id === id) || null;
-
-      if (!card) {
-        showNotFound(id);
-        return;
-      }
-
-      renderCard(card);
-    } catch (err) {
-      console.error("Detail-Fehler:", err);
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", load);
-})();
+});
