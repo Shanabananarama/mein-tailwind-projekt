@@ -4,54 +4,33 @@
     <meta charset="utf-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-    />
+      content="width=device-width, initial-scale=1" />
+
     <title>Kartendetail</title>
-    <link rel="icon" href="data:," />
-    <link href="dist/assets/index.css" rel="stylesheet" />
+
+    <!-- WICHTIG: identische Assets wie in cards.html laden (gh-pages & Vite-dev kompatibel) -->
+    <!-- gebündeltes Tailwind/CSS -->
+    <link rel="stylesheet" href="./dist/assets/index-CXGzyQwA.css" />
+    <!-- gebündeltes Basis-JS (enthält die globalen Initialisierungen) -->
+    <script defer src="./dist/assets/index-CXGzyQwA.js"></script>
+
+    <!-- Seiten-spezifisches Script (arbeitet mit den oben geladenen Globals) -->
+    <script type="module" src="./scripts/detail.js"></script>
   </head>
-  <body class="min-h-screen bg-slate-50 text-slate-900">
-    <main class="max-w-5xl mx-auto px-4 py-8">
-      <a href="cards.html" class="text-indigo-600 hover:underline">← Zurück</a>
-      <h1 class="text-4xl font-extrabold tracking-tight mt-6 mb-8">
-        Kartendetail
-      </h1>
 
-      <!-- Fehlerbox (initial unsichtbar) -->
-      <div
-        id="error"
-        class="text-red-600 text-xl font-semibold flex items-center gap-3"
-        style="display:none"
-      >
-        <span aria-hidden="true">❌</span>
-        <span>Fehler beim Laden der Karte.</span>
-      </div>
+  <body class="bg-slate-50 text-slate-900 antialiased">
+    <header class="max-w-6xl mx-auto px-6 py-6">
+      <a href="./cards.html" class="text-indigo-600 font-medium hover:underline">&larr; Zurück</a>
+      <h1 class="text-4xl font-extrabold tracking-tight mt-6">Kartendetail</h1>
+    </header>
 
-      <!-- Detailkarte (initial versteckt, wird bei Erfolg eingeblendet) -->
+    <main class="max-w-6xl mx-auto px-6">
       <section
-        id="detail"
-        class="mt-6 grid gap-6 sm:grid-cols-2"
-        style="display:none"
-      >
-        <article class="rounded-2xl bg-white shadow p-6">
-          <h2 id="card-name" class="text-2xl font-bold mb-2">—</h2>
-          <p class="text-slate-600 mb-6" id="card-team">—</p>
-
-          <dl class="grid grid-cols-3 gap-4 text-sm">
-            <dt class="text-slate-500">ID</dt>
-            <dd id="card-id" class="col-span-2 font-mono">—</dd>
-
-            <dt class="text-slate-500">Variante</dt>
-            <dd id="card-variant" class="col-span-2">—</dd>
-
-            <dt class="text-slate-500">Seltenheit</dt>
-            <dd id="card-rarity" class="col-span-2">—</dd>
-          </dl>
-        </article>
+        id="card-detail"
+        class="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
+        <!-- Inhalt wird von scripts/detail.js befüllt -->
+        <p class="text-slate-500">Lade Karte…</p>
       </section>
     </main>
-
-    <!-- exakt relativ laden (gh-pages-sicher) -->
-    <script src="scripts/detail.js" defer></script>
   </body>
 </html>
