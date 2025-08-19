@@ -1,41 +1,71 @@
-(function () {
-  const loadingEl = document.getElementById('list-loading');
-  const errorEl = document.getElementById('list-error');
-  const listEl = document.getElementById('list');
+/* scripts/cards.js – GH Pages safe data load */
 
-  function show(el) { el && (el.style.display = ''); }
-  function hide(el) { el && (el.style.display = 'none'); }
+(async function () {
+  "use strict";
 
-  async function load() {
-    try {
-      hide(errorEl);
-      show(loadingEl);
+  const byId = (id) => document.getElementById(id);
 
-      // Datenquelle relativ zum Page‑Root (funktioniert auf GH Pages):
-      const dataUrl = new window.URL('public/cards.json', window.location.href).toString();
-      const res = await fetch(`${dataUrl}?cb=${Date.now()}`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const cards = await res.json();
+  const listEl = byId("cards");
+  const errEl = byId("error");
+  const sourceEl = byId("source");
 
-      listEl.innerHTML = cards.map(c => `
-        <div class="card">
-          <h2 class="title">
-            <a href="detail.html?id=${encodeURIComponent(c.id)}">${c.title}</a>
-          </h2>
-          <div class="row"><div class="label">Club</div><div>${c.club || '—'}</div></div>
-          <div class="row"><div class="label">ID</div><div>${c.id}</div></div>
-          <div class="row"><div class="label">Variante</div><div>${c.variant || '—'}</div></div>
-          <div class="row"><div class="label">Seltenheit</div><div>${c.rarity || '—'}</div></div>
-        </div>
-      `).join('');
-
-    } catch (err) {
-      console.error(err);
-      show(errorEl);
-    } finally {
-      hide(loadingEl);
+  function showError(msg) {
+    if (errEl) {
+      errEl.textContent = msg;
+      errEl.style.display = "block";
+    } else {
+      // Fallback
+      alert(msg);
     }
   }
 
-  load();
+  try {
+    // Resolve cards.json RELATIV zur aktuellen Seite (cards.html)
+    // → auf GH Pages wird das zu /mein-tailwind-projekt/cards.json
+    const dataUrl = new window.URL("cards.json", window.location.href);
+    const fetchUrl = `${dataUrl.toString()}?cb=${Date.now()}`;
+
+    // Quelle in der UI anzeigen (optional span#source)
+    if (sourceEl) {
+      const path = dataUrl.pathname.startsWith("/")
+        ? dataUrl.pathname.slice(1)
+        : dataUrl.pathname;
+      sourceEl.textContent = path;
+    }
+
+    const res = await fetch(fetchUrl, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    /** @type {{cards: Array<any>}} */
+    const json = await res.json();
+    const cards = Array.isArray(json?.cards) ? json.cards : [];
+
+    if (!listEl) return;
+
+    // Render (minimal – passe bei Bedarf an dein Markup an)
+    listEl.innerHTML = "";
+    for (const c of cards) {
+      const a = document.createElement("a");
+      a.href = `detail.html?id=${encodeURIComponent(c.id)}`;
+      a.className = "card-link";
+
+      const div = document.createElement("div");
+      div.className = "card";
+
+      div.innerHTML = `
+        <h2>${c.name ?? ""}</h2>
+        <p>${c.club ?? ""}</p>
+        <p><strong>ID:</strong> ${c.id ?? ""}</p>
+        <p><strong>Variante:</strong> ${c.variant ?? "—"}</p>
+        <p><strong>Seltenheit:</strong> ${c.rarity ?? "—"}</p>
+      `.trim();
+
+      a.appendChild(div);
+      listEl.appendChild(a);
+    }
+  } catch (e) {
+    showError("Fehler beim Laden.");
+    // Optional: console für Diagnose
+    console.error("[cards.js] Load failed:", e);
+  }
 })();
