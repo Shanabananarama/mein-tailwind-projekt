@@ -2,21 +2,56 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <title>Kartendetail</title>
-    <link href="./style/output.css" rel="stylesheet" />
+    <link rel="icon" href="data:," />
+    <link href="dist/assets/index.css" rel="stylesheet" />
   </head>
-  <body class="bg-gray-50 text-slate-900">
-    <div class="max-w-5xl mx-auto px-4 py-6">
-      <a href="./cards.html" class="text-indigo-600 hover:underline">← Zurück</a>
-      <h1 class="text-3xl font-bold mt-4">Kartendetail</h1>
+  <body class="min-h-screen bg-slate-50 text-slate-900">
+    <main class="max-w-5xl mx-auto px-4 py-8">
+      <a href="cards.html" class="text-indigo-600 hover:underline">← Zurück</a>
+      <h1 class="text-4xl font-extrabold tracking-tight mt-6 mb-8">
+        Kartendetail
+      </h1>
 
-      <!-- Ausgabecontainer -->
-      <div id="detail" class="mt-6 bg-white rounded-lg shadow p-6">
-        <p class="text-slate-500">Lade Karte…</p>
+      <!-- Fehlerbox (initial unsichtbar) -->
+      <div
+        id="error"
+        class="text-red-600 text-xl font-semibold flex items-center gap-3"
+        style="display:none"
+      >
+        <span aria-hidden="true">❌</span>
+        <span>Fehler beim Laden der Karte.</span>
       </div>
-    </div>
 
-    <script src="./scripts/detail.js" defer></script>
+      <!-- Detailkarte (initial versteckt, wird bei Erfolg eingeblendet) -->
+      <section
+        id="detail"
+        class="mt-6 grid gap-6 sm:grid-cols-2"
+        style="display:none"
+      >
+        <article class="rounded-2xl bg-white shadow p-6">
+          <h2 id="card-name" class="text-2xl font-bold mb-2">—</h2>
+          <p class="text-slate-600 mb-6" id="card-team">—</p>
+
+          <dl class="grid grid-cols-3 gap-4 text-sm">
+            <dt class="text-slate-500">ID</dt>
+            <dd id="card-id" class="col-span-2 font-mono">—</dd>
+
+            <dt class="text-slate-500">Variante</dt>
+            <dd id="card-variant" class="col-span-2">—</dd>
+
+            <dt class="text-slate-500">Seltenheit</dt>
+            <dd id="card-rarity" class="col-span-2">—</dd>
+          </dl>
+        </article>
+      </section>
+    </main>
+
+    <!-- exakt relativ laden (gh-pages-sicher) -->
+    <script src="scripts/detail.js" defer></script>
   </body>
 </html>
