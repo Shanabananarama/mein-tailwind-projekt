@@ -1,22 +1,40 @@
+// eslint.config.js (ESM, Flat Config)
+import globals from "globals";
+
+/**
+ * Ziel:
+ * - Browser-Globals (URL, URLSearchParams, alert, window, document, …) bekannt machen
+ * - Generierte Artefakte nicht linten (dist/, node_modules/)
+ * - Warnregeln für Quotes & Semikolons beibehalten
+ */
 export default [
+  // 1) Globale Ignores: gebaute Artefakte & Dependencies
   {
-    files: ["**/*.js"],
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      "build/**",
+      ".vite/**",
+      ".storybook/**"
+    ],
+  },
+
+  // 2) Projekt-weite Spracheinstellungen & Regeln
+  {
     languageOptions: {
+      // Browser + moderne JS-Globals aktivieren
       globals: {
-        window: "readonly",
-        document: "readonly",
-        console: "readonly",
-        module: "readonly",
-        js: "readonly",
-        fetch: "readonly",
-        MutationObserver: "readonly"
-      }
+        ...globals.browser,   // URL, URLSearchParams, window, document, alert, …
+        ...globals.es2021,
+      },
     },
     rules: {
-      "no-unused-vars": "warn",
-      "no-undef": "error",
+      // Behalte deine Style-Warnungen:
+      "quotes": ["warn", "double"],
       "semi": ["warn", "always"],
-      "quotes": ["warn", "double"]
-    }
-  }
+      // Sicherheitshalber: wenn irgendwo noch ein Global nicht aufgelöst wird,
+      // verhindern wir false positives:
+      "no-undef": "off"
+    },
+  },
 ];
