@@ -2,25 +2,19 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width,initial-scale=1,viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
     <title>Kartendetail</title>
-    <meta name="description" content="Tradingcards – Kartendetail" />
     <style>
-      :root { color-scheme: light dark; }
       body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 24px; line-height: 1.5; }
       a { color: #4f46e5; text-decoration: none; }
       a:hover { text-decoration: underline; }
       .muted { color: #6b7280; }
-      .card { max-width: 920px; margin: 24px auto; border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px; }
-      .hidden { display: none; }
-      .error { color: #dc2626; font-weight: 600; }
-      .grid { display: grid; grid-template-columns: 200px 1fr; gap: 12px 24px; }
-      .h1 { font-size: 40px; font-weight: 800; margin: 8px 0 24px; }
+      .card { max-width: 920px; margin: 0 auto; }
+      .h1 { font-size: 36px; font-weight: 800; margin: 8px 0 24px; }
+      .grid { display: grid; grid-template-columns: 140px 1fr; gap: 12px 20px; }
       .label { color: #6b7280; }
       .value { font-weight: 600; }
+      .error { color: #dc2626; font-weight: 600; }
     </style>
   </head>
   <body>
@@ -29,30 +23,18 @@
 
       <h1 class="h1">Kartendetail</h1>
 
-      <!-- Ladezustand / Fehler -->
       <p id="detail-loading" class="muted">Lade Karte…</p>
-      <p id="detail-error" class="error hidden">Fehler beim Laden der Karte.</p>
+      <p id="detail-error" class="error" style="display:none">Fehler beim Laden der Karte.</p>
 
-      <!-- Datenraster -->
       <div id="detail-content" class="grid">
-        <div class="label">Titel</div>
-        <div id="card-title" class="value">—</div>
-
-        <div class="label">Club</div>
-        <div id="card-club" class="value">—</div>
-
-        <div class="label">ID</div>
-        <div id="card-id" class="value">—</div>
-
-        <div class="label">Variante</div>
-        <div id="card-variant" class="value">—</div>
-
-        <div class="label">Seltenheit</div>
-        <div id="card-rarity" class="value">—</div>
+        <div class="label">Titel</div><div id="card-title" class="value">—</div>
+        <div class="label">Club</div><div id="card-club" class="value">—</div>
+        <div class="label">ID</div><div id="card-id" class="value">—</div>
+        <div class="label">Variante</div><div id="card-variant" class="value">—</div>
+        <div class="label">Seltenheit</div><div id="card-rarity" class="value">—</div>
       </div>
     </div>
 
-    <!-- Detail-Logik (gh-pages-safe) -->
     <script src="scripts/detail.js"></script>
   </body>
 </html>
