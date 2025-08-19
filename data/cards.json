@@ -1,29 +1,28 @@
 [
   {
     "id": "card_messi_tc",
-    "title": "Lionel Messi - Top Card",
-    "series": "Topps Champions",
-    "description": "Eine seltene Lionel Messi Sammelkarte aus der Champions Serie.",
-    "price": "1200€",
-    "trend": "steigend",
-    "limited": "ja"
+    "title": "Lionel Messi",
+    "team": "FC Barcelona",
+    "variant": "Refractor",
+    "rarity": "Parallel",
+    "series": "Topps Chrome 2017/18",
+    "description": "Iconic Lionel Messi Topps Chrome Refractor parallel.",
+    "price": 249.9,
+    "trend": 5.2,
+    "limited": " /499",
+    "image": "images/cards/messi_tc.png"
   },
   {
-    "id": "card_ronaldo_cr7",
-    "title": "Cristiano Ronaldo - CR7 Special",
-    "series": "Panini Prizm",
-    "description": "Cristiano Ronaldo im ikonischen Juventus Trikot.",
-    "price": "950€",
-    "trend": "stabil",
-    "limited": "nein"
-  },
-  {
-    "id": "card_jordan_mj",
-    "title": "Michael Jordan Rookie Reprint",
-    "series": "Fleer",
-    "description": "Michael Jordans legendäre Rookie-Karte – Reprint Edition.",
-    "price": "600€",
-    "trend": "fallend",
-    "limited": "ja"
+    "id": "card_jordan_rc",
+    "title": "Michael Jordan",
+    "team": "Chicago Bulls",
+    "variant": "—",
+    "rarity": "Base",
+    "series": "Fleer 1986",
+    "description": "Michael Jordan rookie era base-style reference card.",
+    "price": 1199.0,
+    "trend": -2.1,
+    "limited": "",
+    "image": "images/cards/jordan_rc.png"
   }
 ]
