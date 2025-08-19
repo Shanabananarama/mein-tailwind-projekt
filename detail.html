@@ -2,39 +2,51 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Kartendetail</title>
-    <style>
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 24px; line-height: 1.5; }
-      a { color: #4f46e5; text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      .muted { color: #6b7280; }
-      .card { max-width: 920px; margin: 0 auto; }
-      .h1 { font-size: 36px; font-weight: 800; margin: 8px 0 24px; }
-      .grid { display: grid; grid-template-columns: 140px 1fr; gap: 12px 20px; }
-      .label { color: #6b7280; }
-      .value { font-weight: 600; }
-      .error { color: #dc2626; font-weight: 600; }
-    </style>
+    <!-- vorhandenes Styling bleibt via globalen CSS/Build erhalten -->
   </head>
   <body>
-    <div class="card">
+    <main class="page page-detail" style="padding: 24px;">
       <p><a href="cards.html">← Zurück</a></p>
 
-      <h1 class="h1">Kartendetail</h1>
+      <h1 style="margin: 16px 0; font-size: 2.2rem; font-weight: 800;">
+        Kartendetail
+      </h1>
 
-      <p id="detail-loading" class="muted">Lade Karte…</p>
-      <p id="detail-error" class="error" style="display:none">Fehler beim Laden der Karte.</p>
+      <!-- Fehlerbox (standardmäßig sichtbar, wird vom Script überschrieben) -->
+      <p id="detail-error" style="display:none; color:#d00; font-size:1.25rem;">
+        ❌ Fehler beim Laden der Karte.
+      </p>
 
-      <div id="detail-content" class="grid">
-        <div class="label">Titel</div><div id="card-title" class="value">—</div>
-        <div class="label">Club</div><div id="card-club" class="value">—</div>
-        <div class="label">ID</div><div id="card-id" class="value">—</div>
-        <div class="label">Variante</div><div id="card-variant" class="value">—</div>
-        <div class="label">Seltenheit</div><div id="card-rarity" class="value">—</div>
-      </div>
-    </div>
+      <!-- Detailbox, wird nach erfolgreichem Laden eingeblendet -->
+      <section id="detail-box" style="display:none; margin-top: 16px;">
+        <article
+          style="
+            border-radius: 16px;
+            padding: 24px;
+            background: rgba(0,0,0,0.06);
+          "
+        >
+          <h2 id="card-title" style="font-size: 2rem; color:#3b82f6; margin:0 0 16px;">
+            —
+          </h2>
 
-    <script src="scripts/detail.js"></script>
+          <dl style="margin:0;">
+            <dt style="opacity:.7;">Club</dt>
+            <dd id="card-club" style="margin:0 0 12px;">—</dd>
+
+            <dt style="opacity:.7;">Variante</dt>
+            <dd id="card-variant" style="margin:0 0 12px;">—</dd>
+
+            <dt style="opacity:.7;">Seltenheit</dt>
+            <dd id="card-rarity" style="margin:0;">—</dd>
+          </dl>
+        </article>
+      </section>
+    </main>
+
+    <!-- Seite lädt die Logik -->
+    <script src="scripts/detail.js" defer></script>
   </body>
 </html>
