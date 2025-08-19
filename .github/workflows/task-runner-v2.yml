@@ -1,0 +1,86 @@
+name: Task Runner v2 (Dropdown → PR + Auto‑Merge)
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Payload auswählen"
+        required: true
+        type: choice
+        options: [a2, a3, a4]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: jq installieren
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Payload lesen
+        id: check
+        run: |
+          set -euo pipefail
+          test -f "payloads/${{ inputs.task }}.json"
+          echo "payload=$(tr -d '\n' < payloads/${{ inputs.task }}.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Dateien aus Payload schreiben
+        run: |
+          set -euo pipefail
+          JSON='${{ steps.check.outputs.payload }}'
+          echo "$JSON" | jq -c '.[]' | while read -r item; do
+            path=$(echo "$item" | jq -r '.path')
+            content=$(echo "$item" | jq -r '.content')
+            mkdir -p "$(dirname "$path")"
+            printf "%b" "$content" > "$path"
+            echo "Wrote $path"
+          done
+
+      # >>> NEW: garantiert eine Änderung pro Run
+      - name: Force change marker
+        run: |
+          mkdir -p .ci
+          echo "run=${{ github.run_id }} ts=$(date -u +%FT%TZ)" > ".ci/force-${{ github.run_id }}.txt"
+          echo "created .ci/force-${{ github.run_id }}.txt"
+
+      - name: Debug – git status
+        run: |
+          git status --porcelain=v1 || true
+          ls -la openapi || true
+          ls -la mocks || true
+          ls -la .ci || true
+
+      - name: PR erstellen (PAT + gültiger Suffix)
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.PR_AUTOMATION_TOKEN }}
+          add-paths: |
+            openapi/**
+            mocks/**
+            .ci/**
+            README_A2.md
+          base: main
+          branch: task/${{ inputs.task }}
+          branch-suffix: timestamp
+          delete-branch: true
+          title: "Task: ${{ inputs.task }} (automated)"
+          body: "Automated update via payloads/${{ inputs.task }}.json"
+          commit-message: "chore(task): apply payload ${{ inputs.task }}"
+          signoff: true
+
+      - name: Auto‑Merge (squash)
+        if: steps.cpr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.PR_AUTOMATION_TOKEN }}
+        run: |
+          gh pr merge ${{ steps.cpr.outputs['pull-request-number'] }} \
+            --repo "$GITHUB_REPOSITORY" --auto --squash

@@ -1,2 +1,7 @@
-node_modules
-node_modules
+# --- allow API artifacts even with broad ignores ---
+!openapi
+!openapi/**
+!mocks
+!mocks/**
+!.gitignore
+!.gitattributes

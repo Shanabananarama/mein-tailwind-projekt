@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1" />
+
+    <title>Kartendetail</title>
+
+    <!-- WICHTIG: identische Assets wie in cards.html laden (gh-pages & Vite-dev kompatibel) -->
+    <!-- gebündeltes Tailwind/CSS -->
+    <link rel="stylesheet" href="./dist/assets/index-CXGzyQwA.css" />
+    <!-- gebündeltes Basis-JS (enthält die globalen Initialisierungen) -->
+    <script defer src="./dist/assets/index-CXGzyQwA.js"></script>
+
+    <!-- Seiten-spezifisches Script (arbeitet mit den oben geladenen Globals) -->
+    <script type="module" src="./scripts/detail.js"></script>
+  </head>
+
+  <body class="bg-slate-50 text-slate-900 antialiased">
+    <header class="max-w-6xl mx-auto px-6 py-6">
+      <a href="./cards.html" class="text-indigo-600 font-medium hover:underline">&larr; Zurück</a>
+      <h1 class="text-4xl font-extrabold tracking-tight mt-6">Kartendetail</h1>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6">
+      <section
+        id="card-detail"
+        class="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
+        <!-- Inhalt wird von scripts/detail.js befüllt -->
+        <p class="text-slate-500">Lade Karte…</p>
+      </section>
+    </main>
+  </body>
+</html>

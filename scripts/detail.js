@@ -1,49 +1,97 @@
-// ==============================
-// detail.js - mit Chart Import
-// ==============================
+/* scripts/detail.js — stabil, gh-pages-sicher, ohne no-undef */
+/* eslint-disable no-console */
+(function () {
+  'use strict';
 
-// Chart.js importieren (Chart wird hierdurch global verfügbar)
-import Chart from "chart.js/auto";
+  // ---------- kleine Utilities ----------
+  const $ = (sel) => document.querySelector(sel);
 
-// Beispiel-Daten für das Chart (bitte anpassen, wenn du eigene Daten nutzt)
-const ctx = document.getElementById("myChart");
-
-if (ctx) {
-  new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
-      datasets: [{
-        label: "# of Votes",
-        data: [12, 19, 3, 5, 2, 3],
-        backgroundColor: [
-          "rgba(255, 99, 132, 0.2)",
-          "rgba(54, 162, 235, 0.2)",
-          "rgba(255, 206, 86, 0.2)",
-          "rgba(75, 192, 192, 0.2)",
-          "rgba(153, 102, 255, 0.2)",
-          "rgba(255, 159, 64, 0.2)"
-        ],
-        borderColor: [
-          "rgba(255, 99, 132, 1)",
-          "rgba(54, 162, 235, 1)",
-          "rgba(255, 206, 86, 1)",
-          "rgba(75, 192, 192, 1)",
-          "rgba(153, 102, 255, 1)",
-          "rgba(255, 159, 64, 1)"
-        ],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true
-        }
+  const trySet = (selectors, value) => {
+    for (const sel of selectors) {
+      const el = $(sel);
+      if (el) {
+        el.textContent = value ?? '—';
+        return true;
       }
     }
-  });
-} else {
-  console.warn("Kein Canvas-Element mit ID 'myChart' gefunden.");
-}
+    return false;
+  };
+
+  const showError = (msg) => {
+    const candidates = ['#error', '.js-error', '[data-role="error"]'];
+    for (const sel of candidates) {
+      const el = $(sel);
+      if (el) {
+        el.style.removeProperty('display');
+        el.textContent = msg;
+        return;
+      }
+    }
+    console.error(msg);
+  };
+
+  const hideError = () => {
+    const candidates = ['#error', '.js-error', '[data-role="error"]'];
+    for (const sel of candidates) {
+      const el = $(sel);
+      if (el) el.style.display = 'none';
+    }
+  };
+
+  // ---------- ID aus Query holen (eslint-safe via window.*) ----------
+  const params = new window.URLSearchParams(window.location.search);
+  const cardId = (params.get('id') || '').trim();
+
+  if (!cardId) {
+    showError('Fehler: Keine Karten-ID in der URL gefunden.');
+    return;
+  }
+
+  // ---------- Daten laden (gh-pages: relativer Pfad passt) ----------
+  // detail.html liegt im Repo-Root → 'data/cards.json' wird zu /mein-tailwind-projekt/data/cards.json
+  const dataUrl = `data/cards.json?cb=${Date.now()}`;
+
+  const normalize = (data) => {
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.cards)) return data.cards;
+    if (data && typeof data === 'object') {
+      return Object.keys(data).map((k) => ({ id: k, ...data[k] }));
+    }
+    return [];
+  };
+
+  const render = (card) => {
+    hideError();
+
+    trySet(['[data-field="title"]', '.js-title', 'h1'], card.title || card.name || '—');
+    trySet(['[data-field="club"]', '.js-club'], card.club || card.team || '—');
+    trySet(['[data-field="id"]', '.js-id'], card.id || '—');
+    trySet(['[data-field="variant"]', '.js-variant'], card.variant || '—');
+    trySet(['[data-field="rarity"]', '.js-rarity'], card.rarity || card.seltenheit || '—');
+  };
+
+  const run = async () => {
+    try {
+      const res = await fetch(dataUrl, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const list = normalize(json);
+
+      const card = list.find((c) => (c.id || '').trim() === cardId);
+      if (!card) {
+        showError(`Karte mit ID „${cardId}“ nicht gefunden.`);
+        return;
+      }
+      render(card);
+    } catch (err) {
+      console.error(err);
+      showError('Fehler beim Laden der Karte.');
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run, { once: true });
+  } else {
+    run();
+  }
+})();

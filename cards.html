@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Karten</title>
+    <link href="style/output.css" rel="stylesheet" />
+  </head>
+  <body class="bg-gray-50 text-gray-900">
+    <div class="max-w-6xl mx-auto p-6 space-y-6">
+      <a href="index.html" class="text-blue-600 hover:underline">← Start</a>
+      <h1 class="text-4xl font-extrabold">Karten</h1>
+      <p class="text-gray-600">Quelle: <code id="cards-source" class="text-gray-800">—</code></p>
+
+      <!-- fester Container-Name für die Liste -->
+      <div id="cards-list" class="min-h-[4rem]">
+        <p class="text-gray-500">Lade Karten …</p>
+      </div>
+    </div>
+
+    <!-- Liste laden -->
+    <script src="scripts/cards.js"></script>
+  </body>
+</html>
