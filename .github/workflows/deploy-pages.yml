@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
@@ -10,10 +10,9 @@ permissions:
   pages: write
   id-token: write
 
-# immer nur ein Pages-Deploy gleichzeitig
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -25,21 +24,26 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 22
+          cache: npm
 
-      - name: Install
+      - name: Install deps (CI)
         run: npm ci
 
+      - name: Lint
+        run: npm run lint --if-present
+
       - name: Build
+        env:
+          # Vite erwartet in vite.config.js: base: '/mein-tailwind-projekt/'
+          NODE_ENV: production
         run: npm run build
 
-      # 👉 WICHTIG: Pfad zu deinen fertigen Dateien
-      # In deinem Repo heißt der Ordner bereits 'dist'
-      - name: Upload artifact
+      - name: Upload dist to Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: dist
+          if-no-files-found: error
 
   deploy:
     needs: build
