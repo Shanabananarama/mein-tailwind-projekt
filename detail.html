@@ -1,41 +1,28 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kartendetail</title>
-  <link rel="stylesheet" href="./dist/output.css" />
-</head>
-<body class="bg-gray-50 text-gray-900">
-  <main class="max-w-3xl mx-auto p-6">
-    <a href="./cards.html" class="text-indigo-600 hover:underline">&larr; Zurück</a>
-    <h1 class="text-2xl font-bold mb-4">Kartendetail</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kartendetail</title>
+    <link href="style/output.css" rel="stylesheet" />
+  </head>
 
-    <!-- Standard-Fehleranzeige (wird von JS ausgeblendet wenn erfolgreich) -->
-    <p id="error-message" class="text-red-600 font-semibold">❌ Fehler beim Laden der Karte.</p>
+  <body class="bg-gray-100 text-gray-900">
+    <div class="max-w-6xl mx-auto p-6">
+      <a href="cards.html" class="text-blue-600 hover:underline mb-4 inline-block">← Zurück</a>
 
-    <!-- Optionale Container für Standard-Felder -->
-    <h2 id="card-title" class="text-xl font-semibold mt-6"></h2>
-    <p id="card-series" class="text-gray-600 mb-4"></p>
-    <p id="card-description" class="mb-4"></p>
+      <h1 class="text-4xl font-extrabold tracking-tight text-center mb-8">Kartendetail</h1>
 
-    <dl class="grid grid-cols-[max-content,1fr] gap-x-4 gap-y-2">
-      <dt class="text-gray-500">Preis</dt>
-      <dd id="card-price" class="font-medium">—</dd>
+      <!-- Fehlerfläche (vom Script ein-/ausgeblendet) -->
+      <p id="detail-error" class="text-red-600 text-2xl flex items-center gap-3 mb-6" style="display:none">
+        <span aria-hidden="true">❌</span>
+        <span>Fehler beim Laden der Karte.</span>
+      </p>
 
-      <dt class="text-gray-500">Trend</dt>
-      <dd id="card-trend" class="font-medium">—</dd>
-
-      <dt class="text-gray-500">Limitierung</dt>
-      <dd id="card-limited" class="font-medium">—</dd>
-    </dl>
-
-    <!-- Fallback: nur sichtbar falls ID nicht gefunden -->
-    <div id="card-not-found" class="hidden text-red-600 font-semibold mt-6">
-      ❌ Karte nicht gefunden.
+      <!-- Ziel-Container für die Karte -->
+      <div id="card-detail" class="min-h-[6rem]"></div>
     </div>
-  </main>
 
-  <script src="./scripts/detail.js"></script>
-</body>
+    <script src="scripts/detail.js"></script>
+  </body>
 </html>
