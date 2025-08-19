@@ -1,51 +1,44 @@
 <!doctype html>
 <html lang="de">
   <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Kartendetail</title>
-    <link href="style/output.css" rel="stylesheet" />
+    <link href="./style/output.css" rel="stylesheet" />
   </head>
-  <body class="bg-gray-50 text-slate-900">
+  <body class="bg-gray-50 text-gray-900">
     <div class="max-w-6xl mx-auto px-6 py-8">
-      <a href="cards.html" class="text-indigo-600 hover:underline text-lg">← Zurück</a>
-      <h1 class="text-3xl font-extrabold tracking-tight mt-6 mb-8">Kartendetail</h1>
+      <a href="./cards.html" class="text-indigo-600 hover:underline">← Zurück</a>
+      <h1 class="text-3xl font-extrabold mt-4 mb-8">Kartendetail</h1>
 
-      <!-- Fehlerbox -->
-      <div id="errorBox" class="rounded-lg border border-red-200 bg-red-50 text-red-700 p-4 mb-6 hidden">
-        <div class="flex items-start gap-3">
-          <span class="text-2xl leading-none">✖️</span>
-          <p class="font-semibold">
-            <span data-error-msg>Fehler beim Laden der Karte.</span>
-          </p>
-        </div>
-      </div>
+      <!-- Fehleranzeige -->
+      <p id="error" class="hidden text-red-600 text-xl font-semibold mb-6">❌ Fehler beim Laden der Karte.</p>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <!-- Bild -->
-        <div class="md:col-span-1">
+      <!-- Content -->
+      <div class="bg-white rounded-xl shadow p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-1 flex items-center justify-center">
           <img
             id="card-image"
             src=""
             alt="Kartenbild"
-            class="w-full h-auto rounded-xl shadow hidden"
+            class="max-h-96 object-contain rounded-lg shadow-sm"
           />
         </div>
 
-        <!-- Details -->
-        <div class="md:col-span-2 bg-white rounded-xl shadow p-6 space-y-3">
-          <h2 id="card-title" class="text-2xl font-bold">—</h2>
-          <p class="text-slate-500">Team/Serie: <span id="card-series">—</span></p>
-          <p class="italic text-slate-600">Beschreibung/Variante: <span id="card-description">—</span></p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <p class="font-medium">💰 Preis: <span id="card-price">—</span></p>
-            <p class="font-medium text-green-700">📊 Trend: <span id="card-trend">—</span></p>
-            <p class="text-slate-600">Seltenheit/Limitiert: <span id="card-limited">—</span></p>
+        <div class="md:col-span-2">
+          <h2 id="card-title" class="text-2xl font-bold mb-2">—</h2>
+          <p class="text-gray-600 mb-1">Serie/Team: <span id="card-series">—</span></p>
+          <p id="card-description" class="text-gray-500 italic mb-4">—</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <p class="text-lg">💰 Preis: <span id="card-price">—</span></p>
+            <p class="text-lg text-green-700">📊 Trend: <span id="card-trend">—</span></p>
+            <p class="text-gray-600">Limitierung: <span id="card-limited">—</span></p>
           </div>
         </div>
       </div>
     </div>
 
-    <script src="scripts/detail.js" defer></script>
+    <script src="./scripts/detail.js"></script>
   </body>
 </html>
