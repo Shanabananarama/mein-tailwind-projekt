@@ -1,110 +1,52 @@
-/* scripts/cards.js */
-(function () {
-  "use strict";
+/* scripts/cards.js - load cards list from JSON (gh-pages safe) */
+/* eslint-disable no-console */
 
-  function $(id) {
-    return document.getElementById(id);
-  }
+(() => {
+  const listEl = document.getElementById("cards-list");
+  const srcEl = document.getElementById("src");
 
-  function ensureListContainer() {
-    // Versucht gängige Container-IDs in der bestehenden Seite; fällt sonst auf <body> zurück
-    var ids = ["cards-list", "cards", "cardsContainer", "list", "cards-grid"];
-    for (var i = 0; i < ids.length; i++) {
-      var el = $(ids[i]);
-      if (el) return el;
-    }
-    return document.body;
-  }
+  // WICHTIG: JSON liegt im Repo unter docs/api/mocks/...
+  // => öffentlich erreichbar unter /mein-tailwind-projekt/docs/api/mocks/...
+  const DATA_URL = "docs/api/mocks/cards_page_1.json";
 
-  function createCardNode(card) {
-    // Karte als Link zu detail.html?id=<id>
-    var a = document.createElement("a");
-    a.href = "detail.html?id=" + encodeURIComponent(card.id);
-    a.className =
-      "block bg-white p-6 rounded-lg shadow hover:shadow-md transition";
+  async function load() {
+    try {
+      if (srcEl) srcEl.textContent = DATA_URL;
+      const res = await fetch(`${DATA_URL}?cb=${Date.now()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
 
-    var title = document.createElement("h3");
-    title.className = "text-2xl font-bold mb-2";
-    title.textContent = card.title || card.name || "-";
+      if (!Array.isArray(json?.cards)) {
+        throw new Error("Ungültiges JSON-Format: .cards fehlt");
+      }
 
-    var club = document.createElement("p");
-    club.className = "text-gray-600 mb-1";
-    club.textContent = card.team || card.club || card.series || "";
-
-    var idRow = document.createElement("p");
-    idRow.className = "mb-1";
-    idRow.innerHTML = "<span class=\"font-semibold\">ID:</span> " + (card.id || "-");
-
-    var variantRow = document.createElement("p");
-    variantRow.className = "mb-1";
-    variantRow.innerHTML =
-      "<span class=\"font-semibold\">Variante:</span> " + (card.variant || "—");
-
-    var rarityRow = document.createElement("p");
-    rarityRow.className = "mb-1";
-    rarityRow.innerHTML =
-      "<span class=\"font-semibold\">Seltenheit:</span> " + (card.rarity || "-");
-
-    a.appendChild(title);
-    if (club.textContent) a.appendChild(club);
-    a.appendChild(idRow);
-    a.appendChild(variantRow);
-    a.appendChild(rarityRow);
-
-    return a;
-  }
-
-  function showError(msg) {
-    var container = ensureListContainer();
-    container.innerHTML = "";
-    var p = document.createElement("p");
-    p.textContent = "❌ " + msg;
-    p.style.color = "#dc2626";
-    p.style.fontSize = "1.25rem";
-    p.style.margin = "1rem 0";
-    container.appendChild(p);
-  }
-
-  function renderList(list) {
-    var container = ensureListContainer();
-    container.innerHTML = "";
-
-    // optionales Grid-Layout, falls Tailwind aktiv ist
-    var grid = document.createElement("div");
-    grid.className = "grid gap-6 md:grid-cols-2";
-    container.appendChild(grid);
-
-    for (var i = 0; i < list.length; i++) {
-      var node = createCardNode(list[i]);
-      grid.appendChild(node);
+      render(json.cards);
+    } catch (e) {
+      console.error("Fehler beim Laden der Karten:", e);
+      if (listEl) {
+        listEl.innerHTML = `<p class="text-rose-600 text-xl">Fehler beim Laden.</p>`;
+      }
     }
   }
 
-  var src = "data/cards.json?cb=" + String(Date.now());
+  function render(cards) {
+    if (!listEl) return;
+    listEl.innerHTML = cards
+      .map((c) => {
+        const href = `detail.html?id=${encodeURIComponent(c.id)}`;
+        return `
+          <a class="block p-4 rounded-xl bg-white shadow hover:shadow-md transition"
+             href="${href}">
+            <div class="text-2xl font-semibold">${c.title || c.name || "-"}</div>
+            <div class="text-slate-600">${c.club || c.team || ""}</div>
+            <div class="text-slate-500 text-sm mt-1">ID: ${c.id || "-"}</div>
+            <div class="text-slate-500 text-sm">Variante: ${c.variant || "—"}</div>
+            <div class="text-slate-500 text-sm">Seltenheit: ${c.rarity || "-"}</div>
+          </a>
+        `;
+      })
+      .join("");
+  }
 
-  fetch(src, { cache: "no-store" })
-    .then(function (res) {
-      if (!res || !res.ok) {
-        throw new Error("http_" + (res ? res.status : "0"));
-      }
-      return res.json();
-    })
-    .then(function (json) {
-      var list = [];
-      if (json && Object.prototype.toString.call(json) === "[object Array]") {
-        list = json;
-      } else if (json && json.cards && Object.prototype.toString.call(json.cards) === "[object Array]") {
-        list = json.cards;
-      }
-
-      if (!list.length) {
-        showError("Keine Karten gefunden.");
-        return;
-      }
-
-      renderList(list);
-    })
-    .catch(function () {
-      showError("Fehler beim Laden der Kartenliste.");
-    });
+  load();
 })();
