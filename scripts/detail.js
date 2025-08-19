@@ -1,97 +1,98 @@
-/* scripts/detail.js — stabil, gh-pages-sicher, ohne no-undef */
-/* eslint-disable no-console */
+/* scripts/detail.js — lädt Kartendetail aus api/mocks/cards_page_1.json */
+
 (function () {
-  'use strict';
+  "use strict";
 
-  // ---------- kleine Utilities ----------
-  const $ = (sel) => document.querySelector(sel);
+  // Hilfs-Refs
+  const $title = document.getElementById("card-title");
+  const $body  = document.getElementById("card-body");
+  const $err   = document.getElementById("card-error");
 
-  const trySet = (selectors, value) => {
-    for (const sel of selectors) {
-      const el = $(sel);
-      if (el) {
-        el.textContent = value ?? '—';
-        return true;
-      }
+  // Sanfte Fehleranzeige
+  function showError(msg) {
+    if ($err) {
+      $err.textContent = msg || "Fehler beim Laden der Karte.";
+      $err.style.display = "block";
+    } else {
+      // Fallback, falls Markup minimal ist
+      const div = document.createElement("div");
+      div.style.color = "#dc2626";
+      div.style.fontWeight = "600";
+      div.textContent = msg || "Fehler beim Laden der Karte.";
+      document.body.appendChild(div);
     }
-    return false;
-  };
+  }
 
-  const showError = (msg) => {
-    const candidates = ['#error', '.js-error', '[data-role="error"]'];
-    for (const sel of candidates) {
-      const el = $(sel);
-      if (el) {
-        el.style.removeProperty('display');
-        el.textContent = msg;
-        return;
-      }
-    }
-    console.error(msg);
-  };
-
-  const hideError = () => {
-    const candidates = ['#error', '.js-error', '[data-role="error"]'];
-    for (const sel of candidates) {
-      const el = $(sel);
-      if (el) el.style.display = 'none';
-    }
-  };
-
-  // ---------- ID aus Query holen (eslint-safe via window.*) ----------
-  const params = new window.URLSearchParams(window.location.search);
-  const cardId = (params.get('id') || '').trim();
+  // URL-Parameter lesen
+  let cardId = null;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    cardId = params.get("id");
+  } catch (e) {
+    // nichts
+  }
 
   if (!cardId) {
-    showError('Fehler: Keine Karten-ID in der URL gefunden.');
+    showError("Keine Karten-ID in der URL.");
     return;
   }
 
-  // ---------- Daten laden (gh-pages: relativer Pfad passt) ----------
-  // detail.html liegt im Repo-Root → 'data/cards.json' wird zu /mein-tailwind-projekt/data/cards.json
-  const dataUrl = `data/cards.json?cb=${Date.now()}`;
+  // Quelle exakt wie auf der Kartenliste
+  const SOURCE = "api/mocks/cards_page_1.json";
 
-  const normalize = (data) => {
-    if (Array.isArray(data)) return data;
-    if (data && Array.isArray(data.cards)) return data.cards;
-    if (data && typeof data === 'object') {
-      return Object.keys(data).map((k) => ({ id: k, ...data[k] }));
+  // Cache-Busting anhängen
+  const srcUrl =
+    SOURCE + (SOURCE.includes("?") ? "&" : "?") + "cb=" + String(Date.now());
+
+  // Render-Helfer
+  function renderCard(card) {
+    if ($title) $title.textContent = card.title || card.name || "Kartendetail";
+
+    const rows = [];
+    function row(label, value) {
+      rows.push(
+        `<div style="display:flex; gap:.75rem; margin:.25rem 0;">
+          <div style="min-width:7rem; opacity:.7;">${label}</div>
+          <div>${value ?? "—"}</div>
+        </div>`
+      );
     }
-    return [];
-  };
 
-  const render = (card) => {
-    hideError();
+    row("Club", card.club || card.team || "—");
+    row("ID", card.id || "—");
+    row("Variante", card.variant || card.variation || "—");
+    row("Seltenheit", card.rarity || "—");
 
-    trySet(['[data-field="title"]', '.js-title', 'h1'], card.title || card.name || '—');
-    trySet(['[data-field="club"]', '.js-club'], card.club || card.team || '—');
-    trySet(['[data-field="id"]', '.js-id'], card.id || '—');
-    trySet(['[data-field="variant"]', '.js-variant'], card.variant || '—');
-    trySet(['[data-field="rarity"]', '.js-rarity'], card.rarity || card.seltenheit || '—');
-  };
+    if ($body) {
+      $body.innerHTML = rows.join("");
+    }
+  }
 
-  const run = async () => {
-    try {
-      const res = await fetch(dataUrl, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      const list = normalize(json);
+  // Daten laden & Karte finden
+  fetch(srcUrl, { cache: "no-store" })
+    .then(async (r) => {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    })
+    .then((json) => {
+      // Array oder {cards:[...]} unterstützen
+      const list = Array.isArray(json) ? json : (json.cards || json.data || []);
+      if (!Array.isArray(list) || list.length === 0) {
+        throw new Error("Leere Datenquelle.");
+      }
 
-      const card = list.find((c) => (c.id || '').trim() === cardId);
-      if (!card) {
-        showError(`Karte mit ID „${cardId}“ nicht gefunden.`);
+      const hit =
+        list.find((c) => String(c.id) === String(cardId)) ||
+        list.find((c) => String(c.slug || c.key) === String(cardId));
+
+      if (!hit) {
+        showError("Karte nicht gefunden.");
         return;
       }
-      render(card);
-    } catch (err) {
-      console.error(err);
-      showError('Fehler beim Laden der Karte.');
-    }
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run, { once: true });
-  } else {
-    run();
-  }
+      renderCard(hit);
+    })
+    .catch((err) => {
+      console.error("[detail] load error:", err);
+      showError("Datenquelle nicht erreichbar.");
+    });
 })();
