@@ -1,69 +1,85 @@
-/* scripts/detail.js – GH Pages safe data load + stable ID lookup */
+/* scripts/detail.js – gh-pages safe fetch + robustes ID-Mapping */
+(function () {
+  const $title = document.getElementById("cardTitle");
+  const $container = document.getElementById("cardDetail");
+  const $error = document.getElementById("errorMsg");
 
-(async function () {
-  "use strict";
+  function getBase() {
+    const baseTag = document.querySelector("base")?.getAttribute("href");
+    if (baseTag) return baseTag.endsWith("/") ? baseTag : baseTag + "/";
+    const m = location.pathname.match(/^(.*?\/mein-tailwind-projekt\/)/);
+    if (m) return m[1];
+    return "/";
+  }
 
-  const byId = (id) => document.getElementById(id);
-
-  const titleEl = byId("title");
-  const bodyEl = byId("detail");
-  const msgEl = byId("error");
-
-  function showError(msg) {
-    if (msgEl) {
-      msgEl.textContent = msg;
-      msgEl.style.display = "block";
-    } else {
-      alert(msg);
+  function getId() {
+    try {
+      const usp = new URLSearchParams(location.search);
+      const raw = usp.get("id");
+      return raw ? decodeURIComponent(raw.trim()) : null;
+    } catch {
+      return null;
     }
   }
 
-  try {
-    // Query-Parameter lesen (eslint/no-undef Workaround: window.URLSearchParams)
-    const params = new window.URLSearchParams(window.location.search);
-    const rawId = params.get("id") || "";
-    const wantedId = decodeURIComponent(rawId).trim();
+  async function loadDetail() {
+    const id = getId();
+    if (!id) throw new Error("Keine ID in URL.");
 
-    if (!wantedId) {
-      showError("Ungültige ID.");
-      return;
+    const base = getBase();
+    const url = `${base}cards.json?cb=${Date.now()}`;
+
+    let res;
+    try {
+      res = await fetch(url, { cache: "no-store" });
+    } catch (e) {
+      throw new Error("Netzwerkfehler beim Laden " + url);
     }
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} beim Laden ${url}`);
+    }
+    const cards = await res.json();
 
-    // cards.json relativ zur aktuellen Seite (detail.html) auflösen
-    const dataUrl = new window.URL("cards.json", window.location.href);
-    const fetchUrl = `${dataUrl.toString()}?cb=${Date.now()}`;
-
-    const res = await fetch(fetchUrl, { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    /** @type {{cards: Array<any>}} */
-    const json = await res.json();
-    const cards = Array.isArray(json?.cards) ? json.cards : [];
-
-    const card = cards.find(
-      (c) => String(c.id || "").trim() === wantedId
-    );
+    // Finde Karte: id kann Zahl oder String sein
+    const card =
+      cards.find((c) => String(c.id) === String(id)) ||
+      cards.find((c) => (c.slug ? String(c.slug) === String(id) : false));
 
     if (!card) {
-      showError("Karte nicht gefunden.");
+      renderNotFound(id);
       return;
     }
-
-    if (titleEl) titleEl.textContent = card.name || "Kartendetail";
-
-    if (bodyEl) {
-      bodyEl.innerHTML = `
-        <div class="card-detail">
-          <h2>${card.name ?? ""}</h2>
-          <p><strong>Club:</strong> ${card.club ?? "—"}</p>
-          <p><strong>ID:</strong> ${card.id ?? "—"}</p>
-          <p><strong>Variante:</strong> ${card.variant ?? "—"}</p>
-          <p><strong>Seltenheit:</strong> ${card.rarity ?? "—"}</p>
-        </div>
-      `.trim();
-    }
-  } catch (e) {
-    showError("Fehler beim Laden der Karte.");
-    console.error("[detail.js] Load failed:", e);
+    render(card);
   }
+
+  function renderNotFound(id) {
+    if ($error) {
+      $error.textContent = `Karte nicht gefunden (id=${id}).`;
+      $error.style.display = "block";
+    }
+  }
+
+  function render(card) {
+    if ($title) $title.textContent = card.name || "Kartendetail";
+    if ($container) {
+      $container.innerHTML = `
+        <div class="text-slate-700">Club: ${card.club || "—"}</div>
+        <div class="text-slate-700">ID: ${card.id ?? "—"}</div>
+        <div class="text-slate-700">Variante: ${card.variant || "—"}</div>
+        <div class="text-slate-700">Seltenheit: ${card.rarity || "—"}</div>
+      `;
+    }
+  }
+
+  function showError(err) {
+    console.error(err);
+    if ($error) {
+      $error.textContent = "Fehler beim Laden der Karte.";
+      $error.style.display = "block";
+    } else {
+      alert("Fehler beim Laden der Karte.");
+    }
+  }
+
+  loadDetail().catch(showError);
 })();
