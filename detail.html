@@ -2,35 +2,113 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1" />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Kartendetail</title>
-
-    <!-- WICHTIG: identische Assets wie in cards.html laden (gh-pages & Vite-dev kompatibel) -->
-    <!-- gebündeltes Tailwind/CSS -->
-    <link rel="stylesheet" href="./dist/assets/index-CXGzyQwA.css" />
-    <!-- gebündeltes Basis-JS (enthält die globalen Initialisierungen) -->
-    <script defer src="./dist/assets/index-CXGzyQwA.js"></script>
-
-    <!-- Seiten-spezifisches Script (arbeitet mit den oben geladenen Globals) -->
-    <script type="module" src="./scripts/detail.js"></script>
+    <style>
+      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue, Arial, "Apple Color Emoji","Segoe UI Emoji"; padding: 24px; }
+      a { color: #4f46e5; text-decoration: none; }
+      h1 { font-size: 2.25rem; font-weight: 800; margin: 0 0 24px 0; }
+      .muted { color: #6b7280; }
+      .error { color: #dc2626; font-weight: 600; }
+      .row { margin: 12px 0; }
+      .label { color: #6b7280; width: 120px; display: inline-block; }
+    </style>
   </head>
+  <body>
+    <p><a href="./cards.html">← Zurück</a></p>
+    <h1 id="card-title">Kartendetail</h1>
 
-  <body class="bg-slate-50 text-slate-900 antialiased">
-    <header class="max-w-6xl mx-auto px-6 py-6">
-      <a href="./cards.html" class="text-indigo-600 font-medium hover:underline">&larr; Zurück</a>
-      <h1 class="text-4xl font-extrabold tracking-tight mt-6">Kartendetail</h1>
-    </header>
+    <div id="card-content" class="muted">Lade Karte…</div>
+    <div id="card-error" class="error" style="display:none;">Fehler beim Laden der Karte.</div>
 
-    <main class="max-w-6xl mx-auto px-6">
-      <section
-        id="card-detail"
-        class="rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
-        <!-- Inhalt wird von scripts/detail.js befüllt -->
-        <p class="text-slate-500">Lade Karte…</p>
-      </section>
-    </main>
+    <script>
+      (async function loadCard() {
+        const $title = document.getElementById('card-title');
+        const $content = document.getElementById('card-content');
+        const $error = document.getElementById('card-error');
+
+        function showError(msg) {
+          $content.style.display = 'none';
+          $error.style.display = 'block';
+          if (msg) $error.textContent = msg;
+        }
+
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const id = (params.get('id') || '').trim();
+          if (!id) {
+            showError('Keine Karten-ID übergeben.');
+            return;
+          }
+
+          // Cache-Busting (optional)
+          const cb = params.get('cb') || Date.now();
+
+          // ✅ GitHub Pages kompatible, relative Pfade (ab /mein-tailwind-projekt/detail.html)
+          const sources = [
+            `./docs/api/mocks/cards_page_1.json?cb=${cb}`, // primäre Quelle (Liste mit Karten)
+            `./docs/api/mocks/sets.json?cb=${cb}`          // Fallback (falls vorhanden)
+          ];
+
+          let data = null;
+          let lastError = null;
+
+          for (const url of sources) {
+            try {
+              const res = await fetch(url, { cache: 'no-store' });
+              if (!res.ok) throw new Error(`HTTP ${res.status} bei ${url}`);
+              data = await res.json();
+              // data kann Liste oder Objekt sein
+              break;
+            } catch (e) {
+              lastError = e;
+            }
+          }
+
+          if (!data) {
+            console.error(lastError);
+            showError('Datenquelle nicht erreichbar.');
+            return;
+          }
+
+          // Unterstütze beide Strukturen:
+          // 1) Array von Kartenobjekten
+          // 2) Objekt mit .cards oder .items
+          const list = Array.isArray(data)
+            ? data
+            : Array.isArray(data.cards)
+              ? data.cards
+              : Array.isArray(data.items)
+                ? data.items
+                : [];
+
+          const card = list.find(c => String(c.id).trim() === id);
+
+          if (!card) {
+            showError('Karte mit dieser ID wurde nicht gefunden.');
+            return;
+          }
+
+          // Titel + Eigenschaften rendern
+          $title.textContent = card.name || card.title || 'Unbekannte Karte';
+
+          const club = card.team || card.club || card.teamName || '';
+          const variant = card.variant || card.variante || '—';
+          const rarity = card.rarity || card.seltenheit || '—';
+
+          $content.classList.remove('muted');
+          $content.style.display = 'block';
+          $content.innerHTML = `
+            <div class="row"><span class="label">Club:</span> ${club || '—'}</div>
+            <div class="row"><span class="label">ID:</span> ${card.id}</div>
+            <div class="row"><span class="label">Variante:</span> ${variant}</div>
+            <div class="row"><span class="label">Seltenheit:</span> ${rarity}</div>
+          `;
+        } catch (err) {
+          console.error(err);
+          showError('Unerwarteter Fehler beim Laden.');
+        }
+      })();
+    </script>
   </body>
 </html>
