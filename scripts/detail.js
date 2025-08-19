@@ -1,120 +1,83 @@
-/* scripts/detail.js — final, gh‑pages safe; no globals, no alerts, lint‑clean */
+/* scripts/detail.js — gh-pages safe, ohne URL/URLSearchParams */
 (function () {
   "use strict";
 
-  /** DOM refs */
-  var $error = document.getElementById("error");
-  var $wrap = document.getElementById("card-details");
-  var $img = document.getElementById("card-image");
-  var $title = document.getElementById("card-title");
-  var $series = document.getElementById("card-series");
-  var $desc = document.getElementById("card-description");
-  var $price = document.getElementById("card-price");
-  var $trend = document.getElementById("card-trend");
-  var $limited = document.getElementById("card-limited");
+  // ---- Helpers ------------------------------------------------------------
+  function $(id) { return document.getElementById(id); }
 
-  function showError() {
-    if ($error) $error.classList.remove("hidden");
-    if ($wrap) $wrap.classList.add("hidden");
+  function showError(msg) {
+    var box = $("error");
+    if (!box) return;
+    box.textContent = msg || "Fehler beim Laden der Karte.";
+    box.style.display = "block";
+    var detail = $("detail");
+    if (detail) detail.style.display = "none";
   }
 
-  function showCard() {
-    if ($error) $error.classList.add("hidden");
-    if ($wrap) $wrap.classList.remove("hidden");
-  }
-
-  function getIdFromQuery() {
-    try {
-      var params = new URL(window.location.href).searchParams;
-      var raw = params.get("id");
-      if (!raw) return "";
-      return decodeURIComponent(String(raw)).trim();
-    } catch (e) {
-      return "";
-    }
-  }
-
-  function assignText(el, val, fallback) {
-    if (!el) return;
-    el.textContent = val != null && String(val).trim() !== "" ? String(val) : fallback;
-  }
-
-  function assignImg(el, src, alt) {
-    if (!el) return;
-    if (src && String(src).trim() !== "") {
-      el.src = src;
-      el.alt = alt || "Kartenbild";
-    } else {
-      el.removeAttribute("src");
-      el.alt = "";
-    }
-  }
-
-  function sameId(a, b) {
-    return String(a || "").trim() === String(b || "").trim();
-  }
-
-  function buildDataUrl() {
-    // gh‑pages: relative Pfad aus Projekt‑Root (keine absoluten Domain‑Pfadabhängigkeiten)
-    var base = "./data/cards.json";
-    var cb = Date.now().toString();
-    return base + "?cb=" + cb;
-  }
-
-  function pickCard(data, wantedId) {
-    if (!data) return null;
-    // Unterstützt entweder {cards:[...]} oder direkt ein Array
-    var list = Array.isArray(data) ? data : Array.isArray(data.cards) ? data.cards : [];
-    for (var i = 0; i < list.length; i++) {
-      var c = list[i];
-      if (sameId(c && c.id, wantedId)) return c;
+  // Query-Param "id" ohne URL/URLSearchParams parsen (ESLint no-undef safe)
+  function readCardId() {
+    var search = window.location.search.replace(/^\?/, "");
+    if (!search) return null;
+    var parts = search.split("&");
+    for (var i = 0; i < parts.length; i++) {
+      var kv = parts[i].split("=");
+      if (kv[0] === "id") {
+        try {
+          return decodeURIComponent((kv[1] || "").replace(/\+/g, " "));
+        } catch (e) {
+          return kv[1] || null;
+        }
+      }
     }
     return null;
   }
 
-  function render(card) {
-    // robuste Fallbacks
-    assignText($title, card.title || card.name || card.player || "—", "—");
-    assignText($series, card.series || card.team || "—", "—");
-    assignText($desc, card.description || card.desc || "—", "—");
-    assignText($price, card.price != null ? card.price : "—", "—");
-    assignText($trend, card.trend != null ? card.trend : "—", "—");
-    assignText($limited, card.limited != null ? card.limited : "—", "—");
-    assignImg($img, card.image || card.img || "", $title ? $title.textContent : "Karte");
-    showCard();
+  // Basis-Pfad der Seite ermitteln und robust zum JSON joinen
+  function jsonPath() {
+    var segs = window.location.pathname.split("/");
+    segs.pop(); // "detail.html" entfernen
+    var base = segs.join("/");
+    return base + "/data/cards.json?cb=" + Date.now();
   }
 
-  function load() {
-    var wantedId = getIdFromQuery();
-    if (!wantedId) {
-      showError();
-      return;
-    }
-
-    var url = buildDataUrl();
-
-    fetch(url, { cache: "no-store" })
-      .then(function (res) {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.json();
-      })
-      .then(function (json) {
-        var card = pickCard(json, wantedId);
-        if (!card) {
-          showError();
-          return;
-        }
-        render(card);
-      })
-      .catch(function () {
-        showError();
-      });
+  // ---- Ablauf -------------------------------------------------------------
+  var cardId = readCardId();
+  if (!cardId) {
+    showError("Keine Karten-ID in der URL.");
+    return;
   }
 
-  // boot
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", load);
-  } else {
-    load();
-  }
+  var url = jsonPath();
+
+  fetch(url, { cache: "no-store" })
+    .then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    })
+    .then(function (data) {
+      // Sowohl Array als auch {cards:[...]} unterstützen
+      var list = Array.isArray(data) ? data : (data && (data.cards || data.items)) || [];
+      var found = null;
+      for (var i = 0; i < list.length; i++) {
+        var it = list[i];
+        if (it && it.id === cardId) { found = it; break; }
+      }
+      if (!found) throw new Error("Karte nicht gefunden: " + cardId);
+
+      // Render
+      $("card-name").textContent    = found.name    || found.title || "—";
+      $("card-team").textContent    = found.team    || found.club  || "—";
+      $("card-id").textContent      = found.id      || "—";
+      $("card-variant").textContent = found.variant || found.variation || "—";
+      $("card-rarity").textContent  = found.rarity  || "—";
+
+      // UI ein/aus
+      var err = $("error"); if (err) err.style.display = "none";
+      var det = $("detail"); if (det) det.style.display = "block";
+    })
+    .catch(function (err) {
+      // eslint-disable-next-line no-console
+      console.error("[detail] load error:", err);
+      showError("Fehler beim Laden der Karte.");
+    });
 })();
