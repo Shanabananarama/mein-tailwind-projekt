@@ -1,26 +1,29 @@
 [
   {
-    "id": "card_jordan_rc",
-    "title": "Michael Jordan",
-    "series": "Chicago Bulls",
-    "variant": "—",
-    "rarity": "Base",
-    "description": "Rookie-Karte. Legende der Chicago Bulls.",
-    "price": 850.0,
-    "trend": 12.0,
-    "limited": false,
-    "image": "images/jordan.png"
+    "id": "card_messi_tc",
+    "title": "Lionel Messi - Top Card",
+    "series": "Topps Champions",
+    "description": "Eine seltene Lionel Messi Sammelkarte aus der Champions Serie.",
+    "price": "1200€",
+    "trend": "steigend",
+    "limited": "ja"
   },
   {
-    "id": "card_messi_tc",
-    "title": "Lionel Messi",
-    "series": "FC Barcelona",
-    "variant": "Refractor",
-    "rarity": "Parallel",
-    "description": "Topps Chrome Refractor Parallel.",
-    "price": 1200.0,
-    "trend": -5.0,
-    "limited": true,
-    "image": "images/messi.png"
+    "id": "card_ronaldo_cr7",
+    "title": "Cristiano Ronaldo - CR7 Special",
+    "series": "Panini Prizm",
+    "description": "Cristiano Ronaldo im ikonischen Juventus Trikot.",
+    "price": "950€",
+    "trend": "stabil",
+    "limited": "nein"
+  },
+  {
+    "id": "card_jordan_mj",
+    "title": "Michael Jordan Rookie Reprint",
+    "series": "Fleer",
+    "description": "Michael Jordans legendäre Rookie-Karte – Reprint Edition.",
+    "price": "600€",
+    "trend": "fallend",
+    "limited": "ja"
   }
 ]
