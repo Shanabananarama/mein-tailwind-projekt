@@ -1,98 +1,113 @@
-/* scripts/detail.js  — final, gh-pages safe */
+/* scripts/detail.js — lädt dieselbe Datenquelle wie cards.html (gh-pages-safe) */
+/* eslint-disable no-console */
 
 (function () {
-  "use strict";
+  const qs = new URLSearchParams(window.location.search);
+  const wantedId = (qs.get("id") || "").trim();
 
-  // --- DOM refs
-  const titleEl = document.getElementById("card-title");
-  const seriesEl = document.getElementById("card-series");
-  const descEl = document.getElementById("card-description");
-  const priceEl = document.getElementById("card-price");
-  const trendEl = document.getElementById("card-trend");
-  const limitedEl = document.getElementById("card-limited");
-  const imgEl = document.getElementById("card-image");
+  // Element-Hilfen
+  const $ = (sel) => document.querySelector(sel);
+  const mount =
+    $("#card-details") || $("#detail") || $("#app") || $("main") || document.body;
 
-  const errorBox = document.getElementById("errorBox"); // optional: falls vorhanden
-  const container = document.getElementById("card-details");
-
-  // --- Helpers
   const showError = (msg) => {
-    if (errorBox) {
-      errorBox.textContent = msg;
-      errorBox.style.display = "block";
-    }
-    if (container) container.style.display = "none";
+    mount.innerHTML = `
+      <div style="color:#dc2626;font-size:1.25rem;display:flex;gap:.5rem;align-items:center;">
+        <span style="font-size:1.5rem">❌</span>
+        <span>${msg}</span>
+      </div>
+    `;
   };
 
-  const fmtPrice = (n) =>
-    typeof n === "number"
-      ? n.toLocaleString("de-DE", { style: "currency", currency: "EUR" })
-      : "—";
-
-  // --- Parse ID
-  let cardId = "";
-  try {
-    const usp = new window.URLSearchParams(window.location.search);
-    cardId = (usp.get("id") || "").trim();
-  } catch {
-    cardId = "";
-  }
-  if (!cardId) {
-    showError("Fehler beim Laden der Karte.");
+  if (!wantedId) {
+    showError("Keine Karten-ID übergeben.");
     return;
   }
 
-  // --- Fetch JSON (RELATIV! Keine Prefix-Magie)
-  // detail.html liegt im Repo-Root → './data/cards.json' ist zuverlässig auf GitHub Pages
-  const DATA_URL = "./data/cards.json";
+  // Wichtig: exakt dieselbe Quelle wie die Kartenliste
+  // Relativer Pfad funktioniert unter GitHub Pages automatisch:
+  // /mein-tailwind-projekt/detail.html → /mein-tailwind-projekt/api/mocks/cards_page_1.json
+  const DATA_URL = `api/mocks/cards_page_1.json?cb=${Date.now()}`;
 
-  const fetchJson = async (url) => {
-    const cacheBust = `cb=${Date.now()}`;
-    const sep = url.includes("?") ? "&" : "?";
-    const finalUrl = `${url}${sep}${cacheBust}`;
+  const safeText = (v, fallback = "—") =>
+    v === null || v === undefined || `${v}`.trim() === "" ? fallback : String(v);
 
-    const res = await fetch(finalUrl, { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+  const renderCard = (card) => {
+    // Fallback: Wenn bestimmte Felder im JSON anders heißen, zeigen wir alles roh an
+    const title =
+      card.title ||
+      card.name ||
+      card.player ||
+      card.cardTitle ||
+      "Karte";
+
+    const team = card.team || card.club || card.series || "—";
+    const variant = card.variant || card.parallel || "—";
+    const rarity = card.rarity || card.seltenheit || "—";
+    const img = card.image || card.img || card.picture || "";
+
+    mount.innerHTML = `
+      <div class="bg-white p-6 rounded-lg shadow flex flex-col md:flex-row gap-6">
+        <div class="flex-shrink-0 w-full md:w-1/3 flex items-center justify-center">
+          ${
+            img
+              ? `<img src="${img}" alt="${safeText(title)}" class="rounded-lg shadow max-h-96 object-contain"/>`
+              : `<div class="rounded-lg border border-gray-200 text-gray-500 p-8 text-center w-full">Kein Bild</div>`
+          }
+        </div>
+
+        <div class="flex-1">
+          <h1 class="text-2xl font-bold mb-2">${safeText(title)}</h1>
+          <p class="text-gray-600 mb-1">Team/Serie: ${safeText(team)}</p>
+          <p class="text-gray-500 italic mb-4">ID: ${safeText(card.id)}</p>
+          <p class="text-lg"><strong>Variante:</strong> ${safeText(variant)}</p>
+          <p class="text-lg"><strong>Seltenheit:</strong> ${safeText(rarity)}</p>
+
+          <details class="mt-6">
+            <summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
+              Rohdaten anzeigen
+            </summary>
+            <pre class="mt-2 bg-gray-50 p-3 rounded text-xs overflow-auto">${safeText(
+              JSON.stringify(card, null, 2),
+              "{}"
+            )}</pre>
+          </details>
+        </div>
+      </div>
+    `;
   };
 
-  (async () => {
+  const run = async () => {
     try {
-      const data = await fetchJson(DATA_URL);
+      const res = await fetch(DATA_URL, { cache: "no-store" });
+      if (!res.ok) {
+        throw new Error(`Fetch ${DATA_URL} → HTTP ${res.status}`);
+      }
+      const json = await res.json();
 
-      // Unterstützt sowohl {cards:[...]} als auch direkt [...]
-      const list = Array.isArray(data) ? data : Array.isArray(data.cards) ? data.cards : [];
-
-      const card = list.find((c) => (c?.id || "").trim() === cardId);
-      if (!card) {
-        showError("Fehler beim Laden der Karte.");
+      // Datei kann Array oder { cards:[...] } sein – beide Fälle sauber unterstützen
+      const list = Array.isArray(json) ? json : json.cards || json.data || [];
+      if (!Array.isArray(list) || list.length === 0) {
+        showError("Datenquelle leer oder unbekanntes Format.");
         return;
       }
 
-      // --- Render
-      titleEl.textContent = card.title || "—";
-      seriesEl.textContent = card.team || card.series || "—";
-      descEl.textContent = card.description || "—";
-      priceEl.textContent = fmtPrice(card.price);
-      trendEl.textContent = fmtPrice(card.trend);
-      limitedEl.textContent = card.limited ? "Ja" : "Nein";
+      const found =
+        list.find((c) => (c.id || "").trim() === wantedId) ||
+        list.find((c) => (c.slug || "").trim() === wantedId) ||
+        null;
 
-      if (imgEl) {
-        if (card.image) {
-          imgEl.src = card.image;
-          imgEl.alt = card.title || "Kartenbild";
-        } else {
-          imgEl.removeAttribute("src");
-          imgEl.alt = "Kein Bild verfügbar";
-        }
+      if (!found) {
+        showError(`Karte mit ID „${wantedId}” nicht gefunden.`);
+        return;
       }
 
-      // Erfolgsanzeige
-      if (errorBox) errorBox.style.display = "none";
-      if (container) container.style.display = "";
-    } catch (e) {
+      renderCard(found);
+    } catch (err) {
+      console.error(err);
       showError("Fehler beim Laden der Karte.");
-      // optional: console.error("Detail-Load failed:", e);
     }
-  })();
+  };
+
+  run();
 })();
