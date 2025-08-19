@@ -2,27 +2,50 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Kartendetail</title>
     <link href="style/output.css" rel="stylesheet" />
   </head>
+  <body class="bg-gray-50 text-slate-900">
+    <div class="max-w-6xl mx-auto px-6 py-8">
+      <a href="cards.html" class="text-indigo-600 hover:underline text-lg">← Zurück</a>
+      <h1 class="text-3xl font-extrabold tracking-tight mt-6 mb-8">Kartendetail</h1>
 
-  <body class="bg-gray-100 text-gray-900">
-    <div class="max-w-6xl mx-auto p-6">
-      <a href="cards.html" class="text-blue-600 hover:underline mb-4 inline-block">← Zurück</a>
+      <!-- Fehlerbox -->
+      <div id="errorBox" class="rounded-lg border border-red-200 bg-red-50 text-red-700 p-4 mb-6 hidden">
+        <div class="flex items-start gap-3">
+          <span class="text-2xl leading-none">✖️</span>
+          <p class="font-semibold">
+            <span data-error-msg>Fehler beim Laden der Karte.</span>
+          </p>
+        </div>
+      </div>
 
-      <h1 class="text-4xl font-extrabold tracking-tight text-center mb-8">Kartendetail</h1>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Bild -->
+        <div class="md:col-span-1">
+          <img
+            id="card-image"
+            src=""
+            alt="Kartenbild"
+            class="w-full h-auto rounded-xl shadow hidden"
+          />
+        </div>
 
-      <!-- Fehlerfläche (vom Script ein-/ausgeblendet) -->
-      <p id="detail-error" class="text-red-600 text-2xl flex items-center gap-3 mb-6" style="display:none">
-        <span aria-hidden="true">❌</span>
-        <span>Fehler beim Laden der Karte.</span>
-      </p>
-
-      <!-- Ziel-Container für die Karte -->
-      <div id="card-detail" class="min-h-[6rem]"></div>
+        <!-- Details -->
+        <div class="md:col-span-2 bg-white rounded-xl shadow p-6 space-y-3">
+          <h2 id="card-title" class="text-2xl font-bold">—</h2>
+          <p class="text-slate-500">Team/Serie: <span id="card-series">—</span></p>
+          <p class="italic text-slate-600">Beschreibung/Variante: <span id="card-description">—</span></p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <p class="font-medium">💰 Preis: <span id="card-price">—</span></p>
+            <p class="font-medium text-green-700">📊 Trend: <span id="card-trend">—</span></p>
+            <p class="text-slate-600">Seltenheit/Limitiert: <span id="card-limited">—</span></p>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <script src="scripts/detail.js"></script>
+    <script src="scripts/detail.js" defer></script>
   </body>
 </html>
