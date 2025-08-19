@@ -1,44 +1,42 @@
 import React, { useEffect, useState } from "react";
+import { useLocation, Link } from "react-router-dom";
 
 interface Card {
   id: string;
-  name: string;
+  title: string;
   image: string;
   description: string;
+}
+
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
 }
 
 const CardDetail: React.FC = () => {
   const [card, setCard] = useState<Card | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const query = useQuery();
+  const id = query.get("id");
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const cardId = params.get("id");
-
-    if (cardId) {
-      fetch(`${process.env.PUBLIC_URL}/docs/api/mocks/cards_page_1.json`)
-        .then((res) => {
-          if (!res.ok) throw new Error("Fehler beim Laden der JSON-Datei");
-          return res.json();
-        })
-        .then((data) => {
-          const found = data.cards.find((c: Card) => c.id === cardId);
-          if (found) {
-            setCard(found);
-          } else {
-            setError("Karte nicht gefunden.");
-          }
-        })
-        .catch(() => setError("Datenquelle nicht erreichbar."));
-    } else {
-      setError("Keine Karten-ID angegeben.");
-    }
-  }, []);
+    fetch(process.env.PUBLIC_URL + "/cards.json")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Datenquelle nicht erreichbar.");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        const found = data.cards.find((c: Card) => c.id === id);
+        setCard(found || null);
+      })
+      .catch((err) => setError(err.message));
+  }, [id]);
 
   if (error) {
     return (
       <div>
-        <a href="cards.html">← Zurück</a>
+        <Link to="/cards.html">← Zurück</Link>
         <h1>Kartendetail</h1>
         <p style={{ color: "red" }}>{error}</p>
       </div>
@@ -48,7 +46,7 @@ const CardDetail: React.FC = () => {
   if (!card) {
     return (
       <div>
-        <a href="cards.html">← Zurück</a>
+        <Link to="/cards.html">← Zurück</Link>
         <h1>Kartendetail</h1>
         <p>Lade Karte…</p>
       </div>
@@ -57,9 +55,9 @@ const CardDetail: React.FC = () => {
 
   return (
     <div>
-      <a href="cards.html">← Zurück</a>
-      <h1>{card.name}</h1>
-      <img src={card.image} alt={card.name} style={{ maxWidth: "300px" }} />
+      <Link to="/cards.html">← Zurück</Link>
+      <h1>{card.title}</h1>
+      <img src={process.env.PUBLIC_URL + "/" + card.image} alt={card.title} />
       <p>{card.description}</p>
     </div>
   );
