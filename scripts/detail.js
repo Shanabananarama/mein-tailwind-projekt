@@ -1,114 +1,120 @@
-/* scripts/detail.js – lint-clean (keine globalen URL/URLSearchParams), gh-pages safe */
-"use strict";
-
+/* scripts/detail.js — final, gh‑pages safe; no globals, no alerts, lint‑clean */
 (function () {
-  // -------- helpers ---------------------------------------------------------
-  function getQueryParamId() {
-    var qs = window.location.search || "";
-    if (qs && qs.charAt(0) === "?") qs = qs.substring(1);
-    if (!qs) return "";
-    var pairs = qs.split("&");
-    for (var i = 0; i < pairs.length; i++) {
-      var kv = pairs[i].split("=");
-      var k = decodeURIComponent(kv[0] || "");
-      if (k === "id") {
-        var v = decodeURIComponent((kv[1] || "").replace(/\+/g, " "));
-        return (v || "").trim();
-      }
+  "use strict";
+
+  /** DOM refs */
+  var $error = document.getElementById("error");
+  var $wrap = document.getElementById("card-details");
+  var $img = document.getElementById("card-image");
+  var $title = document.getElementById("card-title");
+  var $series = document.getElementById("card-series");
+  var $desc = document.getElementById("card-description");
+  var $price = document.getElementById("card-price");
+  var $trend = document.getElementById("card-trend");
+  var $limited = document.getElementById("card-limited");
+
+  function showError() {
+    if ($error) $error.classList.remove("hidden");
+    if ($wrap) $wrap.classList.add("hidden");
+  }
+
+  function showCard() {
+    if ($error) $error.classList.add("hidden");
+    if ($wrap) $wrap.classList.remove("hidden");
+  }
+
+  function getIdFromQuery() {
+    try {
+      var params = new URL(window.location.href).searchParams;
+      var raw = params.get("id");
+      if (!raw) return "";
+      return decodeURIComponent(String(raw)).trim();
+    } catch (e) {
+      return "";
     }
-    return "";
   }
 
-  function setText(id, value) {
-    var el = document.getElementById(id);
-    if (el) el.textContent = value;
+  function assignText(el, val, fallback) {
+    if (!el) return;
+    el.textContent = val != null && String(val).trim() !== "" ? String(val) : fallback;
   }
 
-  function setImage(id, src, alt) {
-    var el = document.getElementById(id);
-    if (el && src) {
-      el.setAttribute("src", src);
-      if (alt) el.setAttribute("alt", alt);
+  function assignImg(el, src, alt) {
+    if (!el) return;
+    if (src && String(src).trim() !== "") {
+      el.src = src;
+      el.alt = alt || "Kartenbild";
+    } else {
+      el.removeAttribute("src");
+      el.alt = "";
     }
   }
 
-  function hideErrorUI() {
-    var nodes = document.querySelectorAll("#error, .error, .error-message, .js-error, [data-error]");
-    for (var i = 0; i < nodes.length; i++) nodes[i].style.display = "none";
+  function sameId(a, b) {
+    return String(a || "").trim() === String(b || "").trim();
   }
 
-  function showDetailsContainer() {
-    var wrap = document.getElementById("card-details");
-    if (wrap) wrap.style.display = "";
+  function buildDataUrl() {
+    // gh‑pages: relative Pfad aus Projekt‑Root (keine absoluten Domain‑Pfadabhängigkeiten)
+    var base = "./data/cards.json";
+    var cb = Date.now().toString();
+    return base + "?cb=" + cb;
   }
 
-  function renderNotFound(msg) {
-    setText("card-title", "Nicht gefunden");
-    setText("card-description", msg || "Keine Karte mit dieser ID.");
+  function pickCard(data, wantedId) {
+    if (!data) return null;
+    // Unterstützt entweder {cards:[...]} oder direkt ein Array
+    var list = Array.isArray(data) ? data : Array.isArray(data.cards) ? data.cards : [];
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i];
+      if (sameId(c && c.id, wantedId)) return c;
+    }
+    return null;
   }
 
-  function pickCardsArray(json) {
-    if (!json) return [];
-    if (Array.isArray(json)) return json;
-    if (Array.isArray(json.cards)) return json.cards;
-    if (Array.isArray(json.items)) return json.items;
-    if (Array.isArray(json.data)) return json.data;
-    return [];
+  function render(card) {
+    // robuste Fallbacks
+    assignText($title, card.title || card.name || card.player || "—", "—");
+    assignText($series, card.series || card.team || "—", "—");
+    assignText($desc, card.description || card.desc || "—", "—");
+    assignText($price, card.price != null ? card.price : "—", "—");
+    assignText($trend, card.trend != null ? card.trend : "—", "—");
+    assignText($limited, card.limited != null ? card.limited : "—", "—");
+    assignImg($img, card.image || card.img || "", $title ? $title.textContent : "Karte");
+    showCard();
   }
 
-  // -------- main ------------------------------------------------------------
-  document.addEventListener("DOMContentLoaded", function () {
-    (async function () {
-      try {
-        var id = getQueryParamId();
-        if (!id) {
-          renderNotFound("Fehlende ID.");
-          return;
-        }
+  function load() {
+    var wantedId = getIdFromQuery();
+    if (!wantedId) {
+      showError();
+      return;
+    }
 
-        // relative zum Projekt-Root (detail.html liegt im Root)
-        var url = "data/cards.json?v=" + String(Date.now());
+    var url = buildDataUrl();
 
-        var res = await fetch(url, { cache: "no-store" });
-        if (!res || !res.ok) {
-          renderNotFound("Daten nicht erreichbar.");
-          return;
-        }
-
-        var json = await res.json();
-        var list = pickCardsArray(json);
-
-        var needle = id.trim();
-        var card = null;
-        for (var i = 0; i < list.length; i++) {
-          var c = list[i] || {};
-          var cid = (c.id || "").trim();
-          if (cid === needle) {
-            card = c;
-            break;
-          }
-        }
-
+    fetch(url, { cache: "no-store" })
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function (json) {
+        var card = pickCard(json, wantedId);
         if (!card) {
-          renderNotFound("Karte nicht gefunden: " + needle);
+          showError();
           return;
         }
+        render(card);
+      })
+      .catch(function () {
+        showError();
+      });
+  }
 
-        // Werte in DOM schreiben (nur wenn Slots existieren)
-        setText("card-title", card.name || card.title || "—");
-        setText("card-series", card.team || card.series || "—");
-        setText("card-description", card.description || card.desc || "—");
-        setText("card-price", card.price != null ? String(card.price) + " €" : "—");
-        setText("card-trend", card.trend != null ? String(card.trend) + " €" : "—");
-        setText("card-limited", card.limited != null ? String(card.limited) : "—");
-        setImage("card-image", card.image || card.img || "", card.name || card.title || "");
-
-        hideErrorUI();
-        showDetailsContainer();
-      } catch (_e) {
-        // Fallback sichtbar lassen, kein alert/console (lint / UX)
-        setText("card-description", "Ladefehler.");
-      }
-    })();
-  });
+  // boot
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", load);
+  } else {
+    load();
+  }
 })();
