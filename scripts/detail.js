@@ -1,125 +1,76 @@
-/* scripts/detail.js */
-(() => {
+/* eslint-env browser */
+/* global URLSearchParams */
+
+(function () {
   "use strict";
 
-  function showError(message) {
-    const box = document.getElementById("errorBox");
-    if (box) {
-      box.classList.remove("hidden");
-      const msg = box.querySelector("[data-error-msg]");
-      if (msg) msg.textContent = message || "Fehler beim Laden der Karte.";
-    }
-  }
-
-  function hideError() {
-    const box = document.getElementById("errorBox");
-    if (box) box.classList.add("hidden");
-  }
-
-  function setText(id, text) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text ?? "—";
-  }
-
-  function setImage(id, src, alt) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (src) {
-      el.src = src;
-      el.alt = alt || "Kartenbild";
+  function showError(text) {
+    const el = document.getElementById("error");
+    if (el) {
+      el.textContent = `❌ ${text}`;
       el.classList.remove("hidden");
-    } else {
-      el.classList.add("hidden");
     }
   }
 
-  function getBasePath() {
-    // GitHub Pages Projektpfad robust bestimmen
-    const slug = "/mein-tailwind-projekt/";
-    return window.location.pathname.includes(slug) ? slug : "/";
+  // 1) ID aus Query
+  const params = new URLSearchParams(window.location.search);
+  const rawId = params.get("id");
+  const id = rawId ? decodeURIComponent(rawId).trim() : "";
+
+  if (!id) {
+    showError("Fehlende Karten-ID.");
+    return;
   }
 
-  async function fetchJson(url) {
-    const cacheBust = `cb=${Date.now()}`;
-    const sep = url.includes("?") ? "&" : "?";
-    const res = await fetch(`${url}${sep}${cacheBust}`, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Fetch ${url} → HTTP ${res.status}`);
-    return res.json();
-  }
+  // 2) gh-pages Basispfad
+  const base = window.location.pathname.startsWith("/mein-tailwind-projekt/")
+    ? "/mein-tailwind-projekt"
+    : "";
 
-  async function loadCards() {
-    // Primär-Datenquelle + stabile Fallbacks
-    const base = getBasePath();
-    const candidates = [
-      `${base}data/cards.json`,
-      `${base}api/mocks/cards_page_1.json`,
-    ];
+  // 3) Daten laden (Cache-Busting)
+  const dataUrl = `${base}/data/cards.json?cb=${Date.now()}`;
 
-    for (const u of candidates) {
-      try {
-        const data = await fetchJson(u);
-        // Unterstütze verschiedene Strukturen
-        if (Array.isArray(data)) return data;
-        if (Array.isArray(data?.cards)) return data.cards;
-        if (Array.isArray(data?.data)) return data.data;
-        if (Array.isArray(data?.items)) return data.items;
-      } catch {
-        // weiter zum nächsten Kandidaten
-      }
-    }
-    throw new Error("Keine Datenquelle lieferte Karten.");
-  }
+  fetch(dataUrl, { cache: "no-store" })
+    .then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
+    .then((payload) => {
+      const list = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload.cards)
+        ? payload.cards
+        : [];
 
-  function normalizeId(v) {
-    return (v || "").toString().trim();
-  }
-
-  function pickText(card, keys, fallback = "—") {
-    for (const k of keys) {
-      if (card?.[k]) return card[k];
-    }
-    return fallback;
-  }
-
-  (async () => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const cardId = normalizeId(params.get("id"));
-      if (!cardId) {
-        showError("Keine Karten-ID in der URL.");
-        return;
-      }
-
-      const cards = await loadCards();
-      const normalized = cards.map((c) => ({
-        ...c,
-        id: normalizeId(c.id ?? c.card_id ?? c.code),
-      }));
-
-      const card = normalized.find((c) => c.id === cardId);
+      const card = list.find((c) => c && c.id === id);
       if (!card) {
-        showError(`Karte nicht gefunden: ${cardId}`);
+        showError("Karte nicht gefunden.");
         return;
       }
 
-      hideError();
+      // 4) DOM füllen (sanft, falls Felder fehlen)
+      const set = (sel, val) => {
+        const n = document.querySelector(sel);
+        if (n && val != null && val !== "") n.textContent = String(val);
+      };
 
-      // Titel / Name
-      setText("card-title", pickText(card, ["title", "name"]));
-      // Team / Serie
-      setText("card-series", pickText(card, ["team", "club", "series"]));
-      // Beschreibung / Variante
-      setText("card-description", pickText(card, ["description", "variant"]));
-      // Preis / Trend (falls vorhanden)
-      setText("card-price", card.price ? `${card.price} €` : "—");
-      setText("card-trend", card.trend ? `${card.trend} €` : "—");
-      // Rarität/Limitiert
-      setText("card-limited", pickText(card, ["rarity", "limit"]));
-      // Bild
-      setImage("card-image", pickText(card, ["image", "img", "photo", "picture"], ""));
-    } catch (err) {
-      console.error(err);
+      set("#card-title", card.title || card.name || "");
+      set("#card-series", card.team || card.series || "");
+      set("#card-description", card.description || "");
+      set("#card-price", card.price != null ? `${card.price} €` : "—");
+      set("#card-trend", card.trend != null ? `${card.trend} €` : "—");
+      set("#card-limited", card.limited != null ? String(card.limited) : "—");
+
+      const img = document.getElementById("card-image");
+      if (img && card.image) {
+        img.src = card.image;
+        img.alt = card.title || card.name || "Karte";
+      }
+
+      const err = document.getElementById("error");
+      if (err) err.classList.add("hidden");
+    })
+    .catch(() => {
       showError("Fehler beim Laden der Karte.");
-    }
-  })();
+    });
 })();
