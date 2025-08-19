@@ -35,9 +35,21 @@ jobs:
 
       - name: Build
         env:
-          # Vite erwartet in vite.config.js: base: '/mein-tailwind-projekt/'
           NODE_ENV: production
         run: npm run build
+
+      - name: Verify & list dist content
+        run: |
+          echo "==== dist tree (maxdepth=2) ===="
+          find dist -maxdepth 2 -type f | sort
+          echo "==== check cards.json ===="
+          if [ -f dist/cards.json ]; then
+            echo "cards.json present"
+            head -c 200 dist/cards.json || true
+          else
+            echo "cards.json MISSING in dist/"
+            exit 1
+          fi
 
       - name: Upload dist to Pages artifact
         uses: actions/upload-pages-artifact@v3
