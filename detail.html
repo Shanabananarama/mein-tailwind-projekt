@@ -2,43 +2,64 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <title>Kartendetail</title>
+    <!-- Tailwind/CSS build -->
     <link href="./style/output.css" rel="stylesheet" />
   </head>
+
   <body class="bg-gray-50 text-gray-900">
-    <div class="max-w-6xl mx-auto px-6 py-8">
-      <a href="./cards.html" class="text-indigo-600 hover:underline">← Zurück</a>
-      <h1 class="text-3xl font-extrabold mt-4 mb-8">Kartendetail</h1>
+    <div class="max-w-6xl mx-auto p-6">
+      <a href="./cards.html" class="text-indigo-600 hover:underline">&larr; Zurück</a>
 
-      <!-- Fehleranzeige -->
-      <p id="error" class="hidden text-red-600 text-xl font-semibold mb-6">❌ Fehler beim Laden der Karte.</p>
+      <h1 class="text-3xl font-extrabold mt-6 mb-6">Kartendetail</h1>
 
-      <!-- Content -->
-      <div class="bg-white rounded-xl shadow p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="md:col-span-1 flex items-center justify-center">
+      <!-- Fehlermeldung (wird von JS ausgeblendet, wenn Daten korrekt geladen) -->
+      <div id="error" class="text-red-600 text-xl flex items-center gap-3">
+        <span class="text-3xl">❌</span>
+        <span>Fehler beim Laden der Karte.</span>
+      </div>
+
+      <!-- Inhalt: wird von JS sichtbar gemacht -->
+      <div
+        id="card-details"
+        class="hidden bg-white p-6 mt-6 rounded-lg shadow flex flex-col md:flex-row gap-6"
+      >
+        <!-- Bild -->
+        <div class="flex-shrink-0 w-full md:w-1/3 flex items-center justify-center">
           <img
             id="card-image"
             src=""
-            alt="Kartenbild"
-            class="max-h-96 object-contain rounded-lg shadow-sm"
+            alt=""
+            class="rounded-lg shadow max-h-96 object-contain"
           />
         </div>
 
-        <div class="md:col-span-2">
+        <!-- Texte -->
+        <div class="flex-1">
           <h2 id="card-title" class="text-2xl font-bold mb-2">—</h2>
-          <p class="text-gray-600 mb-1">Serie/Team: <span id="card-series">—</span></p>
+          <p id="card-series" class="text-gray-600 mb-1">—</p>
           <p id="card-description" class="text-gray-500 italic mb-4">—</p>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <p class="text-lg">💰 Preis: <span id="card-price">—</span></p>
-            <p class="text-lg text-green-700">📊 Trend: <span id="card-trend">—</span></p>
-            <p class="text-gray-600">Limitierung: <span id="card-limited">—</span></p>
+          <div class="space-y-1">
+            <p class="text-lg font-semibold">
+              💰 Preis: <span id="card-price">—</span>
+            </p>
+            <p class="text-lg font-semibold text-green-600">
+              📊 Trend: <span id="card-trend">—</span>
+            </p>
+            <p class="text-gray-600">
+              Limitierung: <span id="card-limited">—</span>
+            </p>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Skript -->
     <script src="./scripts/detail.js"></script>
   </body>
 </html>
