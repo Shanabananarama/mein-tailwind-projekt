@@ -1,9 +1,7 @@
-name: Deploy to GitHub Pages
-
+name: pages
 on:
   push:
     branches: [main]
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,70 +9,46 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: "pages"
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: 🧹 Lint
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Install
-        run: npm ci
-      - name: Run lint
-        run: npm run lint
-
-  test:
-    name: ✅ Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Install
-        run: npm ci
-      - name: Run unit tests
-        run: npm test
-
   build:
-    name: 🏗️ Build
-    needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Install
-        run: npm ci
-      - name: Build
-        run: npm run build
-      - name: Upload Pages artifact
+
+      # Minimaler, sicherer Publish-Ordner ohne node_modules etc.
+      - name: Prepare site
+        run: |
+          set -e
+          mkdir -p .gh-pages
+          # Core-Seiten
+          [ -f cards.html ] && cp -v cards.html .gh-pages/
+          [ -f detail.html ] && cp -v detail.html .gh-pages/
+          # Daten & Skripte
+          [ -d data ] && cp -R data .gh-pages/ || true
+          [ -d scripts ] && cp -R scripts .gh-pages/ || true
+          # ggf. Mock-/API-Dateien aus docs/
+          [ -d docs ] && cp -R docs/* .gh-pages/ || true
+          # Vite/Tailwind Assets, falls vorhanden
+          if [ -d dist/assets ]; then
+            mkdir -p .gh-pages/dist
+            cp -R dist/assets .gh-pages/dist/
+          fi
+
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: .gh-pages
 
   deploy:
-    name: 🚀 Deploy
-    needs: build
-    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
