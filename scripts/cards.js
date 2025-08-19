@@ -1,71 +1,69 @@
-/* scripts/cards.js – GH Pages safe data load */
+/* scripts/cards.js – gh-pages safe fetch */
+(function () {
+  const $list = document.getElementById("cardsList");
+  const $source = document.getElementById("dataSource");
 
-(async function () {
-  "use strict";
+  function getBase() {
+    // 1) <base href="..."> falls gesetzt (kannst du später optional in HTML ergänzen)
+    const baseTag = document.querySelector("base")?.getAttribute("href");
+    if (baseTag) return baseTag.endsWith("/") ? baseTag : baseTag + "/";
 
-  const byId = (id) => document.getElementById(id);
+    // 2) GitHub Pages Unterpfad automatisch erkennen
+    const m = location.pathname.match(/^(.*?\/mein-tailwind-projekt\/)/);
+    if (m) return m[1];
 
-  const listEl = byId("cards");
-  const errEl = byId("error");
-  const sourceEl = byId("source");
-
-  function showError(msg) {
-    if (errEl) {
-      errEl.textContent = msg;
-      errEl.style.display = "block";
-    } else {
-      // Fallback
-      alert(msg);
-    }
+    // 3) Lokal (vite dev) / andere Umgebungen
+    return "/";
   }
 
-  try {
-    // Resolve cards.json RELATIV zur aktuellen Seite (cards.html)
-    // → auf GH Pages wird das zu /mein-tailwind-projekt/cards.json
-    const dataUrl = new window.URL("cards.json", window.location.href);
-    const fetchUrl = `${dataUrl.toString()}?cb=${Date.now()}`;
+  async function loadCards() {
+    const base = getBase();
+    const url = `${base}cards.json?cb=${Date.now()}`;
+    if ($source) $source.textContent = `Quelle: ${url.replace(location.origin + "/", "")}`;
 
-    // Quelle in der UI anzeigen (optional span#source)
-    if (sourceEl) {
-      const path = dataUrl.pathname.startsWith("/")
-        ? dataUrl.pathname.slice(1)
-        : dataUrl.pathname;
-      sourceEl.textContent = path;
+    let res;
+    try {
+      res = await fetch(url, { cache: "no-store" });
+    } catch (e) {
+      throw new Error("Netzwerkfehler beim Laden " + url);
+    }
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} beim Laden ${url}`);
     }
 
-    const res = await fetch(fetchUrl, { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    render(data);
+  }
 
-    /** @type {{cards: Array<any>}} */
-    const json = await res.json();
-    const cards = Array.isArray(json?.cards) ? json.cards : [];
-
-    if (!listEl) return;
-
-    // Render (minimal – passe bei Bedarf an dein Markup an)
-    listEl.innerHTML = "";
-    for (const c of cards) {
+  function render(cards) {
+    if (!$list) return;
+    $list.innerHTML = "";
+    cards.forEach((c) => {
       const a = document.createElement("a");
-      a.href = `detail.html?id=${encodeURIComponent(c.id)}`;
-      a.className = "card-link";
-
-      const div = document.createElement("div");
-      div.className = "card";
-
-      div.innerHTML = `
-        <h2>${c.name ?? ""}</h2>
-        <p>${c.club ?? ""}</p>
-        <p><strong>ID:</strong> ${c.id ?? ""}</p>
-        <p><strong>Variante:</strong> ${c.variant ?? "—"}</p>
-        <p><strong>Seltenheit:</strong> ${c.rarity ?? "—"}</p>
-      `.trim();
-
-      a.appendChild(div);
-      listEl.appendChild(a);
-    }
-  } catch (e) {
-    showError("Fehler beim Laden.");
-    // Optional: console für Diagnose
-    console.error("[cards.js] Load failed:", e);
+      a.className =
+        "block rounded-2xl p-6 bg-white/90 shadow hover:shadow-lg transition";
+      a.href = `detail.html?id=${encodeURIComponent(c.id)}&cb=${Date.now()}`;
+      a.innerHTML = `
+        <div class="text-2xl font-bold mb-2">${c.name || "—"}</div>
+        <div class="text-slate-600">Club: ${c.club || "—"}</div>
+        <div class="text-slate-600">ID: ${c.id ?? "—"}</div>
+        <div class="text-slate-600">Variante: ${c.variant || "—"}</div>
+        <div class="text-slate-600">Seltenheit: ${c.rarity || "—"}</div>
+      `;
+      $list.appendChild(a);
+    });
   }
+
+  function showError(err) {
+    console.error(err);
+    const $err = document.getElementById("errorMsg");
+    if ($err) {
+      $err.textContent = "Fehler beim Laden.";
+      $err.style.display = "block";
+    } else {
+      alert("Fehler beim Laden.");
+    }
+  }
+
+  loadCards().catch(showError);
 })();
