@@ -1,83 +1,97 @@
-/* scripts/detail.js — gh-pages safe, ohne URL/URLSearchParams */
+/* scripts/detail.js — stabil, gh-pages-sicher, ohne no-undef */
+/* eslint-disable no-console */
 (function () {
-  "use strict";
+  'use strict';
 
-  // ---- Helpers ------------------------------------------------------------
-  function $(id) { return document.getElementById(id); }
+  // ---------- kleine Utilities ----------
+  const $ = (sel) => document.querySelector(sel);
 
-  function showError(msg) {
-    var box = $("error");
-    if (!box) return;
-    box.textContent = msg || "Fehler beim Laden der Karte.";
-    box.style.display = "block";
-    var detail = $("detail");
-    if (detail) detail.style.display = "none";
-  }
-
-  // Query-Param "id" ohne URL/URLSearchParams parsen (ESLint no-undef safe)
-  function readCardId() {
-    var search = window.location.search.replace(/^\?/, "");
-    if (!search) return null;
-    var parts = search.split("&");
-    for (var i = 0; i < parts.length; i++) {
-      var kv = parts[i].split("=");
-      if (kv[0] === "id") {
-        try {
-          return decodeURIComponent((kv[1] || "").replace(/\+/g, " "));
-        } catch (e) {
-          return kv[1] || null;
-        }
+  const trySet = (selectors, value) => {
+    for (const sel of selectors) {
+      const el = $(sel);
+      if (el) {
+        el.textContent = value ?? '—';
+        return true;
       }
     }
-    return null;
-  }
+    return false;
+  };
 
-  // Basis-Pfad der Seite ermitteln und robust zum JSON joinen
-  function jsonPath() {
-    var segs = window.location.pathname.split("/");
-    segs.pop(); // "detail.html" entfernen
-    var base = segs.join("/");
-    return base + "/data/cards.json?cb=" + Date.now();
-  }
+  const showError = (msg) => {
+    const candidates = ['#error', '.js-error', '[data-role="error"]'];
+    for (const sel of candidates) {
+      const el = $(sel);
+      if (el) {
+        el.style.removeProperty('display');
+        el.textContent = msg;
+        return;
+      }
+    }
+    console.error(msg);
+  };
 
-  // ---- Ablauf -------------------------------------------------------------
-  var cardId = readCardId();
+  const hideError = () => {
+    const candidates = ['#error', '.js-error', '[data-role="error"]'];
+    for (const sel of candidates) {
+      const el = $(sel);
+      if (el) el.style.display = 'none';
+    }
+  };
+
+  // ---------- ID aus Query holen (eslint-safe via window.*) ----------
+  const params = new window.URLSearchParams(window.location.search);
+  const cardId = (params.get('id') || '').trim();
+
   if (!cardId) {
-    showError("Keine Karten-ID in der URL.");
+    showError('Fehler: Keine Karten-ID in der URL gefunden.');
     return;
   }
 
-  var url = jsonPath();
+  // ---------- Daten laden (gh-pages: relativer Pfad passt) ----------
+  // detail.html liegt im Repo-Root → 'data/cards.json' wird zu /mein-tailwind-projekt/data/cards.json
+  const dataUrl = `data/cards.json?cb=${Date.now()}`;
 
-  fetch(url, { cache: "no-store" })
-    .then(function (res) {
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return res.json();
-    })
-    .then(function (data) {
-      // Sowohl Array als auch {cards:[...]} unterstützen
-      var list = Array.isArray(data) ? data : (data && (data.cards || data.items)) || [];
-      var found = null;
-      for (var i = 0; i < list.length; i++) {
-        var it = list[i];
-        if (it && it.id === cardId) { found = it; break; }
+  const normalize = (data) => {
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.cards)) return data.cards;
+    if (data && typeof data === 'object') {
+      return Object.keys(data).map((k) => ({ id: k, ...data[k] }));
+    }
+    return [];
+  };
+
+  const render = (card) => {
+    hideError();
+
+    trySet(['[data-field="title"]', '.js-title', 'h1'], card.title || card.name || '—');
+    trySet(['[data-field="club"]', '.js-club'], card.club || card.team || '—');
+    trySet(['[data-field="id"]', '.js-id'], card.id || '—');
+    trySet(['[data-field="variant"]', '.js-variant'], card.variant || '—');
+    trySet(['[data-field="rarity"]', '.js-rarity'], card.rarity || card.seltenheit || '—');
+  };
+
+  const run = async () => {
+    try {
+      const res = await fetch(dataUrl, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const list = normalize(json);
+
+      const card = list.find((c) => (c.id || '').trim() === cardId);
+      if (!card) {
+        showError(`Karte mit ID „${cardId}“ nicht gefunden.`);
+        return;
       }
-      if (!found) throw new Error("Karte nicht gefunden: " + cardId);
+      render(card);
+    } catch (err) {
+      console.error(err);
+      showError('Fehler beim Laden der Karte.');
+    }
+  };
 
-      // Render
-      $("card-name").textContent    = found.name    || found.title || "—";
-      $("card-team").textContent    = found.team    || found.club  || "—";
-      $("card-id").textContent      = found.id      || "—";
-      $("card-variant").textContent = found.variant || found.variation || "—";
-      $("card-rarity").textContent  = found.rarity  || "—";
-
-      // UI ein/aus
-      var err = $("error"); if (err) err.style.display = "none";
-      var det = $("detail"); if (det) det.style.display = "block";
-    })
-    .catch(function (err) {
-      // eslint-disable-next-line no-console
-      console.error("[detail] load error:", err);
-      showError("Fehler beim Laden der Karte.");
-    });
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run, { once: true });
+  } else {
+    run();
+  }
 })();
