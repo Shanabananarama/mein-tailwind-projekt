@@ -1,40 +1,33 @@
 <!doctype html>
 <html lang="de">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kartendetail</title>
     <link href="style/output.css" rel="stylesheet" />
-    <script type="module" src="scripts/detail.js" defer></script>
   </head>
+  <body class="bg-gray-50 text-gray-900">
+    <div class="max-w-6xl mx-auto p-6 space-y-6">
+      <a href="cards.html" class="text-blue-600 hover:underline">← Zurück</a>
+      <h1 class="text-4xl font-extrabold">Kartendetail</h1>
+      <p class="text-gray-600">Quelle: <code id="detail-source" class="text-gray-800">data/cards.json</code></p>
 
-  <body class="bg-slate-50 text-slate-900">
-    <main class="max-w-5xl mx-auto px-6 py-10">
-      <header class="flex items-center justify-between mb-8">
-        <a href="index.html" class="text-indigo-600 hover:underline text-xl">← Zurück</a>
-        <h1 class="text-3xl font-extrabold tracking-tight">Kartendetail</h1>
-        <span class="opacity-0">.</span>
-      </header>
+      <!-- fester Containername für Render-Target -->
+      <div id="card-details" class="bg-white rounded-xl shadow p-6 space-y-3">
+        <!-- Optional vorbefüllte Felder (werden von JS überschrieben) -->
+        <h2 id="card-title" class="text-2xl font-bold">—</h2>
+        <p id="card-series" class="text-gray-600">—</p>
+        <p id="card-description" class="text-gray-700 italic">—</p>
+        <p class="text-lg font-semibold">💰 Preis: <span id="card-price">—</span></p>
+        <p class="text-lg font-semibold text-green-700">📊 Trend: <span id="card-trend">—</span></p>
+        <p class="text-gray-700">Limitierung: <span id="card-limited">—</span></p>
 
-      <!-- Fehlerbereich -->
-      <div id="error" class="hidden rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700"></div>
+        <!-- sichtbare Fehlerzone (wird per JS ein-/ausgeblendet) -->
+        <p id="detail-error" class="text-red-600 font-semibold" style="display:none">—</p>
+      </div>
+    </div>
 
-      <!-- Detailkarte -->
-      <article id="card" class="hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 p-6">
-        <h2 id="title" class="text-2xl font-bold mb-2">—</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-2">
-          <div class="text-slate-600">ID</div><div id="cid" class="font-mono">—</div>
-          <div class="text-slate-600">Set-ID</div><div id="setid">—</div>
-          <div class="text-slate-600">Spieler</div><div id="player">—</div>
-          <div class="text-slate-600">Franchise</div><div id="franchise">—</div>
-          <div class="text-slate-600">Nummer</div><div id="number">—</div>
-          <div class="text-slate-600">Variante</div><div id="variant">—</div>
-          <div class="text-slate-600">Seltenheit</div><div id="rarity">—</div>
-        </div>
-      </article>
-
-      <!-- Debug-Ausgabe (nur wenn etwas schiefgeht) -->
-      <pre id="debug" class="hidden mt-6 overflow-auto rounded-lg bg-slate-900 p-4 text-slate-100 text-sm"></pre>
-    </main>
+    <!-- Detail-Logik -->
+    <script src="scripts/detail.js"></script>
   </body>
 </html>
