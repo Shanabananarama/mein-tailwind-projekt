@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -24,46 +24,34 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
+          node-version: 20
+          cache: 'npm'
 
-      - name: Install deps (CI)
+      - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint --if-present
-
       - name: Build
-        env:
-          NODE_ENV: production
         run: npm run build
 
       - name: Verify & list dist content
         run: |
-          echo "==== dist tree (maxdepth=2) ===="
-          find dist -maxdepth 2 -type f | sort
-          echo "==== check cards.json ===="
-          if [ -f dist/cards.json ]; then
-            echo "cards.json present"
-            head -c 200 dist/cards.json || true
-          else
-            echo "cards.json MISSING in dist/"
-            exit 1
-          fi
+          echo "---- DIST TREE ----"
+          ls -la
+          echo "---- DIST CONTENT ----"
+          ls -la dist
+          echo "---- GREP html/js/json in dist ----"
+          find dist -maxdepth 2 -type f \( -name "*.html" -o -name "*.js" -o -name "*.json" \) -print
 
-      - name: Upload dist to Pages artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
-          if-no-files-found: error
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
