@@ -1,16 +1,18 @@
-[
-  {
-    "id": "card_jordan_rc",
-    "title": "Michael Jordan",
-    "club": "Chicago Bulls",
-    "variant": "",
-    "rarity": "Base"
-  },
-  {
-    "id": "card_messi_tc",
-    "title": "Lionel Messi",
-    "club": "FC Barcelona",
-    "variant": "Refractor",
-    "rarity": "Parallel"
-  }
-]
+{
+  "cards": [
+    {
+      "id": "card_messi_tc",
+      "name": "Lionel Messi",
+      "club": "Argentina",
+      "variant": "—",
+      "rarity": "—"
+    },
+    {
+      "id": "card_jordan_rc",
+      "name": "Michael Jordan",
+      "club": "Chicago Bulls",
+      "variant": "—",
+      "rarity": "Base"
+    }
+  ]
+}
