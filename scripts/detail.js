@@ -1,108 +1,69 @@
-/* scripts/detail.js – stable, gh-pages safe, no URLSearchParams */
+/* scripts/detail.js – GH Pages safe data load + stable ID lookup */
 
-/* -------- helpers -------- */
-function parseQuery(search) {
-  var out = {};
-  if (!search) return out;
-  var q = search.charAt(0) === "?" ? search.slice(1) : search;
-  if (!q) return out;
-  var parts = q.split("&");
-  for (var i = 0; i < parts.length; i++) {
-    var kv = parts[i].split("=");
-    var k = decodeURIComponent(kv[0] || "");
-    var v = decodeURIComponent(kv[1] || "");
-    if (k) out[k] = v;
+(async function () {
+  "use strict";
+
+  const byId = (id) => document.getElementById(id);
+
+  const titleEl = byId("title");
+  const bodyEl = byId("detail");
+  const msgEl = byId("error");
+
+  function showError(msg) {
+    if (msgEl) {
+      msgEl.textContent = msg;
+      msgEl.style.display = "block";
+    } else {
+      alert(msg);
+    }
   }
-  return out;
-}
 
-function text(node, value) {
-  if (node) node.textContent = value;
-}
-
-function byId(id) {
-  return document.getElementById(id);
-}
-
-/* -------- constants -------- */
-/* gleiche Quelle wie cards.html */
-var DATA_URL = "docs/api/mocks/cards_page_1.json";
-
-/* Cache-Busting, damit GH-Pages nicht cached */
-function withCb(url) {
-  var sep = url.indexOf("?") === -1 ? "?" : "&";
-  return url + sep + "cb=" + String(Date.now());
-}
-
-/* -------- render -------- */
-function renderCard(card) {
-  /* Erwartete Felder im JSON:
-     id, title (oder name), club (oder team), variant, rarity
-     -> wir mappen defensiv
-  */
-  var title = card.title || card.name || card.player || "—";
-  var club = card.club || card.team || "—";
-  var variant = card.variant || "—";
-  var rarity = card.rarity || "—";
-
-  text(byId("card-title"), title);
-  text(byId("card-club"), club);
-  text(byId("card-variant"), variant);
-  text(byId("card-rarity"), rarity);
-
-  var box = byId("detail-box");
-  if (box) box.style.display = "block";
-}
-
-function showError(msg) {
-  var err = byId("detail-error");
-  if (err) {
-    err.style.display = "block";
-    text(err, "❌ " + msg);
-  }
-}
-
-/* -------- main -------- */
-(function main() {
   try {
-    var q = parseQuery(window.location.search);
-    var id = (q.id || "").trim();
-    if (!id) {
-      showError("Keine Karten-ID in der URL gefunden.");
+    // Query-Parameter lesen (eslint/no-undef Workaround: window.URLSearchParams)
+    const params = new window.URLSearchParams(window.location.search);
+    const rawId = params.get("id") || "";
+    const wantedId = decodeURIComponent(rawId).trim();
+
+    if (!wantedId) {
+      showError("Ungültige ID.");
       return;
     }
 
-    fetch(withCb(DATA_URL))
-      .then(function (r) {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
-      .then(function (data) {
-        /* JSON kann array sein oder {cards:[...]} */
-        var list =
-          (data && (data.cards || data.items || data.data)) || data || [];
-        if (!list || typeof list.length !== "number") list = [];
+    // cards.json relativ zur aktuellen Seite (detail.html) auflösen
+    const dataUrl = new window.URL("cards.json", window.location.href);
+    const fetchUrl = `${dataUrl.toString()}?cb=${Date.now()}`;
 
-        var found = null;
-        for (var i = 0; i < list.length; i++) {
-          var c = list[i] || {};
-          var cid = (c.id || c.ID || c.slug || "").trim();
-          if (cid === id) {
-            found = c;
-            break;
-          }
-        }
+    const res = await fetch(fetchUrl, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        if (!found) {
-          showError("Karte nicht gefunden (ID: " + id + ").");
-          return;
-        }
-        renderCard(found);
-      })
-      .catch(function (e) {
-        showError("Datenquelle nicht erreichbar. " + e.message);
-      });
+    /** @type {{cards: Array<any>}} */
+    const json = await res.json();
+    const cards = Array.isArray(json?.cards) ? json.cards : [];
+
+    const card = cards.find(
+      (c) => String(c.id || "").trim() === wantedId
+    );
+
+    if (!card) {
+      showError("Karte nicht gefunden.");
+      return;
+    }
+
+    if (titleEl) titleEl.textContent = card.name || "Kartendetail";
+
+    if (bodyEl) {
+      bodyEl.innerHTML = `
+        <div class="card-detail">
+          <h2>${card.name ?? ""}</h2>
+          <p><strong>Club:</strong> ${card.club ?? "—"}</p>
+          <p><strong>ID:</strong> ${card.id ?? "—"}</p>
+          <p><strong>Variante:</strong> ${card.variant ?? "—"}</p>
+          <p><strong>Seltenheit:</strong> ${card.rarity ?? "—"}</p>
+        </div>
+      `.trim();
+    }
   } catch (e) {
-    showError("Unerwarteter Fehler. " + e.message);
+    showError("Fehler beim Laden der Karte.");
+    console.error("[detail.js] Load failed:", e);
   }
 })();
