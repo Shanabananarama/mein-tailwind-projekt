@@ -3,26 +3,20 @@
     "id": "card_messi_tc",
     "title": "Lionel Messi",
     "team": "FC Barcelona",
-    "variant": "Refractor",
-    "rarity": "Parallel",
-    "series": "Topps Chrome 2017/18",
-    "description": "Iconic Lionel Messi Topps Chrome Refractor parallel.",
-    "price": 249.9,
-    "trend": 5.2,
-    "limited": " /499",
-    "image": "images/cards/messi_tc.png"
+    "description": "Refractor · Parallel",
+    "price": 299.0,
+    "trend": 5.5,
+    "limited": false,
+    "image": ""
   },
   {
     "id": "card_jordan_rc",
     "title": "Michael Jordan",
     "team": "Chicago Bulls",
-    "variant": "—",
-    "rarity": "Base",
-    "series": "Fleer 1986",
-    "description": "Michael Jordan rookie era base-style reference card.",
-    "price": 1199.0,
-    "trend": -2.1,
-    "limited": "",
-    "image": "images/cards/jordan_rc.png"
+    "description": "Rookie Card",
+    "price": 1200.0,
+    "trend": 12.0,
+    "limited": true,
+    "image": ""
   }
 ]
