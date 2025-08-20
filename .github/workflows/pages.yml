@@ -3,14 +3,12 @@ name: pages
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# vermeidet parallele Deployments
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -26,6 +24,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Install deps
         run: npm ci
@@ -33,26 +32,45 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Sichtprüfung: Was liegt im dist?
-      - name: Verify & list dist content
+      # 🟣 DEBUG: dist-Struktur anzeigen (im Log)
+      - name: Show dist layout
         run: |
-          echo "--- dist root ---"
-          ls -la dist
-          echo "--- dist/scripts ---"
-          ls -la dist/scripts || true
+          echo "::group::pwd & ls"
+          pwd; ls -la
+          echo "::endgroup::"
+          echo "::group::dist tree (max depth 2)"
+          find dist -maxdepth 2 -type f -printf "%p\n" | sort
+          echo "::endgroup::"
+          echo "::group::dist/cards.html (head 120)"
+          sed -n '1,120p' dist/cards.html || true
+          echo "::endgroup::"
+          echo "::group::dist/detail.html (head 120)"
+          sed -n '1,120p' dist/detail.html || true
+          echo "::endgroup::"
 
-      - name: Upload Pages artifact
+      # 🟣 DEBUG: dist zusätzlich als Download-Artefakt anhängen
+      - name: Upload dist-debug artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-debug-${{ github.run_id }}
+          path: dist
+          retention-days: 1
+
+      # offizielles Pages-Artefakt
+      - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
