@@ -1,52 +1,40 @@
 <!doctype html>
 <html lang="de">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kartendetail</title>
-    <!-- vorhandenes Styling bleibt via globalen CSS/Build erhalten -->
-  </head>
-  <body>
-    <main class="page page-detail" style="padding: 24px;">
-      <p><a href="cards.html">← Zurück</a></p>
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>Kartendetail</title>
+  <meta name="description" content="Kartendetailansicht" />
+  <style>
+    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; margin: 0; padding: 24px; background:#fff }
+    .container{max-width:1000px;margin:0 auto}
+    a{color:#4f46e5;text-decoration:none} a:hover{text-decoration:underline}
+    .muted{color:#6b7280}
+    .card{padding:1rem;border-radius:12px;border:1px solid rgba(0,0,0,.08);margin:.75rem 0;background:#fff}
+    h1{font-size:clamp(28px,4vw,40px);margin:0 0 8px 0}
+    img{max-width:100%;height:auto;border-radius:12px}
+    dl{display:grid;grid-template-columns:max-content 1fr;gap:.5rem 1rem}
+    dt{font-weight:600;color:#374151}
+    dd{margin:0;color:#111827}
+  </style>
+</head>
+<body>
+  <main class="container">
+    <p><a href="cards.html">← Zurück</a></p>
+    <h1>Kartendetail</h1>
 
-      <h1 style="margin: 16px 0; font-size: 2.2rem; font-weight: 800;">
-        Kartendetail
-      </h1>
+    <!-- Hier rendert detail.js hinein -->
+    <section id="card-detail" class="card">
+      <p class="muted">Lade Karte…</p>
+    </section>
 
-      <!-- Fehlerbox (standardmäßig sichtbar, wird vom Script überschrieben) -->
-      <p id="detail-error" style="display:none; color:#d00; font-size:1.25rem;">
-        ❌ Fehler beim Laden der Karte.
-      </p>
+    <noscript>Bitte JavaScript aktivieren.</noscript>
+  </main>
 
-      <!-- Detailbox, wird nach erfolgreichem Laden eingeblendet -->
-      <section id="detail-box" style="display:none; margin-top: 16px;">
-        <article
-          style="
-            border-radius: 16px;
-            padding: 24px;
-            background: rgba(0,0,0,0.06);
-          "
-        >
-          <h2 id="card-title" style="font-size: 2rem; color:#3b82f6; margin:0 0 16px;">
-            —
-          </h2>
-
-          <dl style="margin:0;">
-            <dt style="opacity:.7;">Club</dt>
-            <dd id="card-club" style="margin:0 0 12px;">—</dd>
-
-            <dt style="opacity:.7;">Variante</dt>
-            <dd id="card-variant" style="margin:0 0 12px;">—</dd>
-
-            <dt style="opacity:.7;">Seltenheit</dt>
-            <dd id="card-rarity" style="margin:0;">—</dd>
-          </dl>
-        </article>
-      </section>
-    </main>
-
-    <!-- Seite lädt die Logik -->
-    <script src="scripts/detail.js" defer></script>
-  </body>
+  <!-- WICHTIG: public/detail.js wird im Build zu /detail.js -->
+  <script src="detail.js" defer></script>
+</body>
 </html>
