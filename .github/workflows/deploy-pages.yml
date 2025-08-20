@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
@@ -10,6 +10,7 @@ permissions:
   pages: write
   id-token: write
 
+# Verhindert parallele Deploys (beendet alte Runs sauber)
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -25,33 +26,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
 
-      - name: Install dependencies
+      - name: Install deps
         run: npm ci
 
-      - name: Build
+      - name: Build (Vite)
         run: npm run build
-
-      - name: Verify & list dist content
-        run: |
-          echo "---- DIST TREE ----"
-          ls -la
-          echo "---- DIST CONTENT ----"
-          ls -la dist
-          echo "---- GREP html/js/json in dist ----"
-          find dist -maxdepth 2 -type f \( -name "*.html" -o -name "*.js" -o -name "*.json" \) -print
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: dist  # <- Vite Output-Ordner
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
