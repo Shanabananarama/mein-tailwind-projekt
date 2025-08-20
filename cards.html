@@ -2,31 +2,41 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Karten</title>
   <meta name="description" content="Kartenübersicht" />
   <style>
-    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; margin:0; padding:24px; background:#fff }
-    .container{max-width:1000px;margin:0 auto;}
-    h1{font-size:clamp(28px,4vw,40px);margin:0 0 8px 0;}
-    .muted{color:#6b7280}
-    .card{padding:1rem;border-radius:12px;border:1px solid rgba(0,0,0,.08);margin:.75rem 0;background:#fff}
-    a{color:#4f46e5;text-decoration:none} a:hover{text-decoration:underline}
+    :root { color-scheme: light dark; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      margin: 0 auto; padding: 24px; max-width: 1000px; background: Canvas; color: CanvasText;
+    }
+    a { color: #4f46e5; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    h1 { font-size: clamp(28px, 4vw, 40px); margin: 0 0 12px 0; }
+    .muted { color: #6b7280; margin: 0 0 20px 0; }
+    .card { border: 1px solid rgb(0 0 0 / 0.08); border-radius: 12px; padding: 16px; background: #fff; }
+    .item { border: 1px solid rgb(0 0 0 / 0.08); border-radius: 12px; padding: 16px; margin: 12px 0; background: #fff; }
+    .item h2 { margin: 0 0 8px 0; font-size: 22px; color: #1f2937; }
+    .row { display: grid; grid-template-columns: max-content 1fr; gap: .35rem 1rem; margin: 6px 0 0; }
+    dt { font-weight: 600; color: #374151; }
+    dd { margin: 0; color: #111827; }
+    [aria-live="polite"]{ min-height: 2lh; }
   </style>
 </head>
 <body>
   <main class="container">
     <p><a href="index.html">← Start</a></p>
-    <h1>Karten</h1>
-    <p class="muted">Quelle: <span id="source-path" data-source></span></p>
 
-    <!-- Hier rendert cards.js hinein -->
+    <h1>Karten</h1>
+    <p class="muted">Quelle: <span id="source-path" data-source>cards.json</span></p>
+
+    <!-- Hier rendert cards.js die Liste hinein -->
     <div id="cards" aria-live="polite">Lade Karten…</div>
 
-    <noscript>Bitte JavaScript aktivieren.</noscript>
+    <!-- WICHTIG: Loader muss exakt so heißen -->
+    <script src="cards.js" defer></script>
   </main>
-
-  <!-- WICHTIG: richtiger Pfad ins /public (wird nach dist/ kopiert) -->
-  <script src="./cards.js" defer></script>
 </body>
 </html>
