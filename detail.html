@@ -1,52 +1,24 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kartendetail</title>
-    <!-- vorhandenes Styling bleibt via globalen CSS/Build erhalten -->
-  </head>
-  <body>
-    <main class="page page-detail" style="padding: 24px;">
-      <p><a href="cards.html">← Zurück</a></p>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kartendetail</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <a href="cards.html">← Zurück</a>
+    <h1>Kartendetail</h1>
+  </header>
 
-      <h1 style="margin: 16px 0; font-size: 2.2rem; font-weight: 800;">
-        Kartendetail
-      </h1>
+  <main>
+    <section id="card-detail">
+      <!-- Hier rendert detail.js den Inhalt -->
+    </section>
+  </main>
 
-      <!-- Fehlerbox (standardmäßig sichtbar, wird vom Script überschrieben) -->
-      <p id="detail-error" style="display:none; color:#d00; font-size:1.25rem;">
-        ❌ Fehler beim Laden der Karte.
-      </p>
-
-      <!-- Detailbox, wird nach erfolgreichem Laden eingeblendet -->
-      <section id="detail-box" style="display:none; margin-top: 16px;">
-        <article
-          style="
-            border-radius: 16px;
-            padding: 24px;
-            background: rgba(0,0,0,0.06);
-          "
-        >
-          <h2 id="card-title" style="font-size: 2rem; color:#3b82f6; margin:0 0 16px;">
-            —
-          </h2>
-
-          <dl style="margin:0;">
-            <dt style="opacity:.7;">Club</dt>
-            <dd id="card-club" style="margin:0 0 12px;">—</dd>
-
-            <dt style="opacity:.7;">Variante</dt>
-            <dd id="card-variant" style="margin:0 0 12px;">—</dd>
-
-            <dt style="opacity:.7;">Seltenheit</dt>
-            <dd id="card-rarity" style="margin:0;">—</dd>
-          </dl>
-        </article>
-      </section>
-    </main>
-
-    <!-- Seite lädt die Logik -->
-    <script src="scripts/detail.js" defer></script>
-  </body>
+  <!-- Wichtig: jetzt aus public/ geladen -->
+  <script src="detail.js" defer></script>
+</body>
 </html>
