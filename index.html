@@ -1,25 +1,53 @@
 <!doctype html>
 <html lang="de">
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="refresh" content="0; url=./cards.html" />
-    <title>Weiterleitung…</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script>
-      // JS-Fallback (falls meta-refresh blockiert wird)
-      window.location.replace("./cards.html");
-    </script>
-    <style>
-      body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-           display:grid;place-items:center;height:100svh;margin:0}
-      .box{padding:1rem 1.25rem;border:1px solid #e5e7eb;border-radius:12px}
-      a{color:#4f46e5;text-decoration:none}
-      a:hover{text-decoration:underline}
-    </style>
-  </head>
-  <body>
-    <div class="box">
-      Weiterleitung zu <a href="./cards.html">cards.html</a> …
-    </div>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Start · Mein Tailwind Projekt</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font: 16px/1.55 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 24px; }
+    h1 { font-size: clamp(28px, 4vw, 42px); margin: 0 0 12px; }
+    p.lead { color: #6b7280; margin: 0 0 24px; }
+    ul { list-style: none; padding: 0; margin: 24px 0; display: grid; gap: 12px; }
+    a.card {
+      display: block; padding: 16px 18px; border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.1); text-decoration: none;
+      background: #fff; color: inherit;
+    }
+    a.card:hover { outline: 2px solid #6366f1; outline-offset: 2px; }
+    .muted { color: #6b7280; }
+    footer { margin-top: 32px; color: #94a3b8; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Willkommen 👋</h1>
+    <p class="lead">Wähle eine Ansicht aus:</p>
+
+    <ul>
+      <li>
+        <a class="card" href="./cards.html">
+          <strong>Kartenliste</strong><br>
+          <span class="muted">Zeigt alle Karten aus <code>cards.json</code></span>
+        </a>
+      </li>
+      <li>
+        <a class="card" href="./detail.html?id=card_messi_tc">
+          <strong>Beispiel: Kartendetail</strong><br>
+          <span class="muted">Direkter Sprung zur Messi‑Karte</span>
+        </a>
+      </li>
+      <li>
+        <a class="card" href="./cards.json">
+          <strong>Datenquelle</strong><br>
+          <span class="muted">Öffnet die JSON direkt</span>
+        </a>
+      </li>
+    </ul>
+
+    <footer>Startseite von <code>mein-tailwind-projekt</code></footer>
+  </main>
+</body>
 </html>
