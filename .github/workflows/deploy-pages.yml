@@ -2,7 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
+  # zusätzlich manuell auslösbar
   workflow_dispatch:
 
 permissions:
@@ -25,22 +26,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build
         run: npm run build
-
-      - name: Verify & list dist content
-        run: |
-          echo "---- DIST TREE ----"
-          ls -la
-          echo "---- DIST CONTENT ----"
-          ls -la dist
-          echo "---- GREP html/js/json in dist ----"
-          find dist -maxdepth 2 -type f \( -name "*.html" -o -name "*.js" -o -name "*.json" \) -print
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -52,6 +44,8 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
