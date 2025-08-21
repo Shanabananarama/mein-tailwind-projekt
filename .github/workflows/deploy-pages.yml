@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -26,13 +26,20 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
+      - name: Install deps
         run: npm ci
 
       - name: Build
-        run: npm run build
+        run: npm run build --if-present
 
-      # 🔍 Diagnose: dist-Inhalt listen
+      # sorgt dafür, dass unsere einfachen JS-Dateien sicher in dist landen
+      - name: Copy public JS to dist
+        run: |
+          mkdir -p dist
+          [ -f public/cards.js ] && cp -f public/cards.js dist/cards.js || true
+          [ -f public/detail.js ] && cp -f public/detail.js dist/detail.js || true
+
+      # Debug-Listing (wie gehabt)
       - name: Verify & list dist content
         run: |
           echo "---- DIST TREE ----"
@@ -46,14 +53,53 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+          name: github-pages
 
   deploy:
+    needs: build
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  # NEU: /dist in eigenem Branch committen und PR öffnen (kein Push auf main)
+  commit_dist_pr:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download dist artifact from this workflow
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          path: dist
+
+      - name: Prepare branch name
+        run: echo "BRANCH=dist-sync-${{ github.run_id }}" >> $GITHUB_ENV
+
+      - name: Commit dist to new branch
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: ${{ env.BRANCH }}
+          create_branch: true
+          file_pattern: dist/**
+          commit_message: "chore(dist): sync from deploy run ${{ github.run_id }}"
+
+      - name: Open PR with dist changes
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ${{ env.BRANCH }}
+          base: main
+          title: "chore(dist): sync from deploy run ${{ github.run_id }}"
+          body: "Automatischer PR: Synchronisiert den gebauten **/dist**-Ordner aus dem Deploy-Workflow."
+          labels: dist-sync, automated
