@@ -22,13 +22,28 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # DEBUG: Artefakte des Deploy-Runs auflisten (zeigt uns die exakten Namen)
+      - name: List artifacts from deploy run
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runId = ${{ github.event.workflow_run.id }};
+            const { data } = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId,
+            });
+            core.info(`Artifacts for run ${runId}:`);
+            for (const a of data.artifacts) {
+              core.info(`- ${a.name} (expired=${a.expired})`);
+            }
+
       - name: Download dist from Deploy run
         uses: actions/download-artifact@v4
         with:
-          # Name, das die Deploy-Pipeline hochlädt
-          name: github-pages
-          # ganz wichtig: Artefakt aus DEM Deploy-Run laden
-          run-id: ${{ github.event.workflow_run.id }}
+          name: github-pages                # Standardname von upload-pages-artifact
+          run-id: ${{ github.event.workflow_run.id }}   # Artefakt aus dem Deploy-Run
+          github-token: ${{ secrets.GITHUB_TOKEN }}     # nötig bei run-id
           path: dist
 
       - name: Commit dist to main
