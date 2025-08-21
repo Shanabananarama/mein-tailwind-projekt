@@ -5,37 +5,38 @@ on:
     workflows: ["Deploy to GitHub Pages"]
     types: [completed]
 
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: sync-dist-to-repo
+  cancel-in-progress: true
+
 jobs:
   sync:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Download Pages artifact
+      - name: Download dist from Deploy run
         uses: actions/download-artifact@v4
         with:
+          # Name, das die Deploy-Pipeline hochlädt
           name: github-pages
+          # ganz wichtig: Artefakt aus DEM Deploy-Run laden
+          run-id: ${{ github.event.workflow_run.id }}
           path: dist
 
-      # --- GUARD: Stelle sicher, dass die zwei JS-Dateien existieren ---
-      - name: Ensure cards.js & detail.js exist in dist
-        run: |
-          echo "---- BEFORE GUARD ----"
-          ls -la dist || true
-          # Falls die Dateien im Artifact fehlen, aus /public übernehmen
-          [ -f dist/cards.js ]  || cp public/cards.js  dist/cards.js
-          [ -f dist/detail.js ] || cp public/detail.js dist/detail.js
-          echo "---- AFTER GUARD ----"
-          ls -la dist
-
-      - name: Commit dist to repo
+      - name: Commit dist to main
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore(dist): update built assets (including JS)"
+          commit_message: "chore(dist): sync from deploy run ${{ github.event.workflow_run.id }}"
           file_pattern: dist/**
+          branch: main
           create_branch: false
+          commit_user_name: github-actions[bot]
+          commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
