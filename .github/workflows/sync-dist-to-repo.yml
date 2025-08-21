@@ -6,52 +6,46 @@ on:
     types: [completed]
 
 permissions:
-  actions: read
   contents: write
+  pull-requests: write
 
 concurrency:
-  group: sync-dist-to-repo
-  cancel-in-progress: true
+  group: "sync-dist-${{ github.event.workflow_run.id }}"
+  cancel-in-progress: false
 
 jobs:
   sync:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # DEBUG: Artefakte des Deploy-Runs auflisten (zeigt uns die exakten Namen)
-      - name: List artifacts from deploy run
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const runId = ${{ github.event.workflow_run.id }};
-            const { data } = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: runId,
-            });
-            core.info(`Artifacts for run ${runId}:`);
-            for (const a of data.artifacts) {
-              core.info(`- ${a.name} (expired=${a.expired})`);
-            }
-
-      - name: Download dist from Deploy run
+      - name: Download dist artifact from Deploy run
         uses: actions/download-artifact@v4
         with:
-          name: github-pages                # Standardname von upload-pages-artifact
-          run-id: ${{ github.event.workflow_run.id }}   # Artefakt aus dem Deploy-Run
-          github-token: ${{ secrets.GITHUB_TOKEN }}     # nötig bei run-id
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+          name: github-pages
           path: dist
+          merge-multiple: true
 
-      - name: Commit dist to main
+      - name: Prepare branch name
+        run: echo "BRANCH=dist-sync-${{ github.event.workflow_run.id }}" >> $GITHUB_ENV
+
+      - name: Commit dist to new branch
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore(dist): sync from deploy run ${{ github.event.workflow_run.id }}"
+          branch: ${{ env.BRANCH }}
+          create_branch: true
           file_pattern: dist/**
-          branch: main
-          create_branch: false
-          commit_user_name: github-actions[bot]
-          commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          commit_message: "chore(dist): sync from deploy run ${{ github.event.workflow_run.id }}"
+
+      - name: Open PR with dist changes
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ${{ env.BRANCH }}
+          base: main
+          title: "chore(dist): sync from deploy run ${{ github.event.workflow_run.id }}"
+          body: "Automatischer PR: /dist aus ${{ github.event.workflow_run.html_url }}."
+          labels: dist-sync, automated
