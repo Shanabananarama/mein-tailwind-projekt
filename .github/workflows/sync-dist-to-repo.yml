@@ -1,27 +1,14 @@
-name: Sync dist to repo (via PR)
+name: Sync dist to repo
 
 on:
-  # Manuell startbar
-  workflow_dispatch:
-  # Automatisch bei relevanten Änderungen
-  push:
-    branches: [ main ]
-    paths:
-      - "src/**"
-      - "public/**"
-      - "cards.*"
-      - "detail.*"
-      - "index.html"
-      - "vite.config.js"
-      - "package.json"
-      - "package-lock.json"
-
-permissions:
-  contents: write
-  pull-requests: write
+  workflow_run:
+    # Triggert, sobald der Pages-Deploy erfolgreich war
+    workflows: ["Deploy to GitHub Pages"]
+    types: [completed]
 
 jobs:
-  build-and-pr:
+  sync:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -30,33 +17,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      # Holt das vom Deploy-Workflow erzeugte Artifact "github-pages"
+      - name: Download Pages artifact
+        uses: actions/download-artifact@v4
         with:
-          node-version: 20
-          cache: npm
-
-      - name: Install deps
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      # Optional: Artefakt anhängen, damit man den Build sofort einsehen kann
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
+          name: github-pages
           path: dist
 
-      # Statt auf main zu pushen -> PR mit dist/**
-      - name: Create PR with dist
-        uses: peter-evans/create-pull-request@v6
+      # Alles aus dist/** committen (nicht nur .html/.json) – inkl. .js
+      - name: Commit dist to repo
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit-message: "chore(dist): update built assets"
-          title: "chore(dist): update built assets"
-          body: "Automated build of the dist/ folder (no direct push to protected main)."
-          branch: bot/update-dist
-          delete-branch: true
-          add-paths: |
-            dist/**
+          commit_message: "chore(dist): update built assets"
+          file_pattern: dist/**
+          create_branch: false
