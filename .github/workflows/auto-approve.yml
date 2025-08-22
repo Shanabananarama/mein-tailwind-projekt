@@ -1,18 +1,13 @@
-name: Auto Approve Pull Requests
+name: Auto Approve
 
 on:
-  pull_request:
-    types: [opened, synchronize]
-
-permissions:
-  pull-requests: write
-  contents: write
+  pull_request_target:
 
 jobs:
   auto-approve:
     runs-on: ubuntu-latest
     steps:
-      - name: Auto approve PR
+      - name: Auto approve pull requests
         uses: hmarr/auto-approve-action@v3
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.AUTO_APPROVE_TOKEN }}
